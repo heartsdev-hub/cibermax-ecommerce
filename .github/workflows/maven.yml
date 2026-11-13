@@ -30,4 +30,6 @@ jobs:
           cache: maven
 
       - name: Ejecutar JUnit y Mockito
+        env:
+          SPRING_PROFILES_ACTIVE: test
         run: mvn -B test
