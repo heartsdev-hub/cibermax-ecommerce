@@ -5,6 +5,7 @@ import com.cibermax.ecommerce.modules.categoria.dto.response.CategoryResponse;
 import com.cibermax.ecommerce.modules.categoria.service.CategoriaService;
 import com.cibermax.ecommerce.shared.exception.DuplicateResourceException;
 import com.cibermax.ecommerce.shared.exception.GlobalExceptionHandler;
+import com.cibermax.ecommerce.shared.exception.ResourceNotFoundException;
 import com.cibermax.ecommerce.shared.response.ApiResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -90,5 +92,40 @@ class CategoriaControllerTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.message").value("Ya existe una categoría con el nombre indicado"));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/{id} responde 200 con el detalle")
+    void findById_returnsOkWithCategoryDetails() throws Exception {
+        when(categoriaService.findById(id)).thenReturn(ApiResult.success(
+                "Categoría obtenida correctamente",
+                response
+        ));
+
+        mockMvc.perform(get("/api/categorias/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(id.toString()))
+                .andExpect(jsonPath("$.data.nombre").value("Tecnología"));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/{id} responde 404 cuando no existe")
+    void findById_returnsNotFoundWhenCategoryDoesNotExist() throws Exception {
+        when(categoriaService.findById(id))
+                .thenThrow(new ResourceNotFoundException("No se encontró la categoría con id: " + id));
+
+        mockMvc.perform(get("/api/categorias/{id}", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/{id} responde 400 con UUID inválido")
+    void findById_returnsBadRequestForInvalidUuid() throws Exception {
+        mockMvc.perform(get("/api/categorias/{id}", "uuid-invalido"))
+                .andExpect(status().isBadRequest());
+
+        verify(categoriaService, never()).findById(any(UUID.class));
     }
 }

@@ -6,6 +6,7 @@ import com.cibermax.ecommerce.modules.categoria.entity.Categoria;
 import com.cibermax.ecommerce.modules.categoria.mapper.CategoriaMapper;
 import com.cibermax.ecommerce.modules.categoria.repository.CategoriaRepository;
 import com.cibermax.ecommerce.shared.exception.DuplicateResourceException;
+import com.cibermax.ecommerce.shared.exception.ResourceNotFoundException;
 import com.cibermax.ecommerce.shared.response.ApiResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,5 +76,36 @@ class CategoriaServiceTest {
 
         verify(categoriaRepository, never()).save(any(Categoria.class));
         verify(categoriaMapper, never()).toEntity(any(CategoryCreateRequestDTO.class));
+    }
+
+    @Test
+    @DisplayName("findById retorna el detalle de una categoría existente")
+    void findById_returnsCategoryDetails() {
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        Instant timestamp = Instant.parse("2026-01-01T10:00:00Z");
+        Categoria categoria = new Categoria(id, "Tecnología", timestamp, timestamp);
+        CategoryResponse response = new CategoryResponse(id, "Tecnología", timestamp, timestamp);
+        when(categoriaRepository.findById(id)).thenReturn(Optional.of(categoria));
+        when(categoriaMapper.toResponse(categoria)).thenReturn(response);
+
+        ApiResult<CategoryResponse> result = categoriaService.findById(id);
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo("Categoría obtenida correctamente");
+        assertThat(result.data()).isEqualTo(response);
+        verify(categoriaMapper).toResponse(categoria);
+    }
+
+    @Test
+    @DisplayName("findById lanza excepción cuando la categoría no existe")
+    void findById_throwsWhenCategoryDoesNotExist() {
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        when(categoriaRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> categoriaService.findById(id))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining(id.toString());
+
+        verify(categoriaMapper, never()).toResponse(any(Categoria.class));
     }
 }

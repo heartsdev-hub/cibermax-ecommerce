@@ -6,11 +6,13 @@ import com.cibermax.ecommerce.modules.categoria.entity.Categoria;
 import com.cibermax.ecommerce.modules.categoria.mapper.CategoriaMapper;
 import com.cibermax.ecommerce.modules.categoria.repository.CategoriaRepository;
 import com.cibermax.ecommerce.shared.exception.DuplicateResourceException;
+import com.cibermax.ecommerce.shared.exception.ResourceNotFoundException;
 import com.cibermax.ecommerce.shared.response.ApiResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CategoriaService {
@@ -31,6 +33,17 @@ public class CategoriaService {
                 .toList();
 
         return ApiResult.success("Categorías obtenidas correctamente", categories);
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResult<CategoryResponse> findById(UUID id) {
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró la categoría con id: " + id));
+
+        return ApiResult.success(
+                "Categoría obtenida correctamente",
+                categoriaMapper.toResponse(categoria)
+        );
     }
 
     @Transactional
