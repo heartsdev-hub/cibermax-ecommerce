@@ -2,6 +2,7 @@ package com.cibermax.ecommerce.modules.categoria.service;
 
 import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryCreateRequestDTO;
 import com.cibermax.ecommerce.modules.categoria.dto.response.CategoryResponse;
+import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.categoria.entity.Categoria;
 import com.cibermax.ecommerce.modules.categoria.mapper.CategoriaMapper;
 import com.cibermax.ecommerce.modules.categoria.repository.CategoriaRepository;
@@ -137,5 +138,58 @@ class CategoriaServiceTest {
 
         assertThat(result.data()).isEmpty();
         verify(categoriaMapper, never()).toResponse(any(Categoria.class));
+    }
+
+    @Test
+    @DisplayName("update edita correctamente una categoría")
+    void update_updatesCategory() {
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        Instant timestamp = Instant.parse("2026-01-01T10:00:00Z");
+        Categoria categoria = new Categoria(id, "Tecnología", timestamp, timestamp);
+        CategoryUpdateRequestDT request = new CategoryUpdateRequestDT("Electrónica");
+        CategoryResponse response = new CategoryResponse(id, "Electrónica", timestamp, timestamp);
+        when(categoriaRepository.findById(id)).thenReturn(Optional.of(categoria));
+        when(categoriaRepository.existsByNombreIgnoreCaseAndIdNot(request.nombre(), id)).thenReturn(false);
+        when(categoriaRepository.save(categoria)).thenReturn(categoria);
+        when(categoriaMapper.toResponse(categoria)).thenReturn(response);
+
+        ApiResult<CategoryResponse> result = categoriaService.update(id, request);
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo("Categoría actualizada correctamente");
+        assertThat(result.data()).isEqualTo(response);
+        verify(categoriaMapper).updateEntity(request, categoria);
+        verify(categoriaRepository).save(categoria);
+    }
+
+    @Test
+    @DisplayName("update lanza excepción cuando la categoría no existe")
+    void update_throwsWhenCategoryDoesNotExist() {
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        CategoryUpdateRequestDT request = new CategoryUpdateRequestDT("Electrónica");
+        when(categoriaRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> categoriaService.update(id, request))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(categoriaRepository, never()).save(any(Categoria.class));
+    }
+
+    @Test
+    @DisplayName("update rechaza un nombre duplicado en otra categoría")
+    void update_rejectsDuplicateName() {
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        Instant timestamp = Instant.parse("2026-01-01T10:00:00Z");
+        Categoria categoria = new Categoria(id, "Tecnología", timestamp, timestamp);
+        CategoryUpdateRequestDT request = new CategoryUpdateRequestDT("Electrónica");
+        when(categoriaRepository.findById(id)).thenReturn(Optional.of(categoria));
+        when(categoriaRepository.existsByNombreIgnoreCaseAndIdNot(request.nombre(), id)).thenReturn(true);
+
+        assertThatThrownBy(() -> categoriaService.update(id, request))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessage("Ya existe otra categoría con el nombre indicado");
+
+        verify(categoriaMapper, never()).updateEntity(request, categoria);
+        verify(categoriaRepository, never()).save(any(Categoria.class));
     }
 }

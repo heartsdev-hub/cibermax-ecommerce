@@ -1,6 +1,7 @@
 package com.cibermax.ecommerce.modules.categoria.service;
 
 import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.categoria.dto.response.CategoryResponse;
 import com.cibermax.ecommerce.modules.categoria.entity.Categoria;
 import com.cibermax.ecommerce.modules.categoria.mapper.CategoriaMapper;
@@ -54,6 +55,24 @@ public class CategoriaService {
                 .toList();
 
         return ApiResult.success("Búsqueda de categorías realizada correctamente", categories);
+    }
+
+    @Transactional
+    public ApiResult<CategoryResponse> update(UUID id, CategoryUpdateRequestDT request) {
+        Categoria categoria = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No se encontró la categoría con id: " + id));
+
+        if (categoriaRepository.existsByNombreIgnoreCaseAndIdNot(request.nombre(), id)) {
+            throw new DuplicateResourceException("Ya existe otra categoría con el nombre indicado");
+        }
+
+        categoriaMapper.updateEntity(request, categoria);
+        Categoria updated = categoriaRepository.save(categoria);
+
+        return ApiResult.success(
+                "Categoría actualizada correctamente",
+                categoriaMapper.toResponse(updated)
+        );
     }
 
     @Transactional

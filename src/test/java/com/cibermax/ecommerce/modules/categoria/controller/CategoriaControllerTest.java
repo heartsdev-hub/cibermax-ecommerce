@@ -1,6 +1,7 @@
 package com.cibermax.ecommerce.modules.categoria.controller;
 
 import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.categoria.dto.response.CategoryResponse;
 import com.cibermax.ecommerce.modules.categoria.service.CategoriaService;
 import com.cibermax.ecommerce.shared.exception.DuplicateResourceException;
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -154,5 +156,58 @@ class CategoriaControllerTest {
         mockMvc.perform(get("/api/categorias/buscar").param("nombre", "inexistente"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    @DisplayName("PUT /api/categorias/{id} responde 200 cuando actualiza")
+    void update_returnsOkWhenCategoryIsUpdated() throws Exception {
+        when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
+                .thenReturn(ApiResult.success("Categoría actualizada correctamente", response));
+
+        mockMvc.perform(put("/api/categorias/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Electrónica\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(id.toString()));
+    }
+
+    @Test
+    @DisplayName("PUT /api/categorias/{id} responde 400 si falta el nombre")
+    void update_returnsBadRequestWhenNameIsMissing() throws Exception {
+        mockMvc.perform(put("/api/categorias/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(categoriaService, never()).update(any(UUID.class), any(CategoryUpdateRequestDT.class));
+    }
+
+    @Test
+    @DisplayName("PUT /api/categorias/{id} responde 404 si no existe")
+    void update_returnsNotFoundWhenCategoryDoesNotExist() throws Exception {
+        when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
+                .thenThrow(new ResourceNotFoundException("No se encontró la categoría"));
+
+        mockMvc.perform(put("/api/categorias/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Electrónica\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /api/categorias/{id} responde 409 si el nombre está duplicado")
+    void update_returnsConflictForDuplicateName() throws Exception {
+        when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
+                .thenThrow(new DuplicateResourceException("Ya existe otra categoría con el nombre indicado"));
+
+        mockMvc.perform(put("/api/categorias/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Electrónica\"}"))
+                .andExpect(status().isConflict());
     }
 }

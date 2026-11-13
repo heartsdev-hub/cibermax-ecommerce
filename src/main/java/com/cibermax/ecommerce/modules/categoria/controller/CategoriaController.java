@@ -1,6 +1,7 @@
 package com.cibermax.ecommerce.modules.categoria.controller;
 
 import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.categoria.dto.response.CategoryResponse;
 import com.cibermax.ecommerce.modules.categoria.service.CategoriaService;
 import com.cibermax.ecommerce.shared.response.ApiResult;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,6 +42,14 @@ public class CategoriaController {
             @RequestParam String nombre
     ) {
         return ResponseEntity.ok(categoriaService.searchByName(nombre));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResult<CategoryResponse>> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody CategoryUpdateRequestDT request
+    ) {
+        return ResponseEntity.ok(categoriaService.update(id, request));
     }
 
     @PostMapping
