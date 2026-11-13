@@ -1,0 +1,33 @@
+
+name: Backend - Pruebas automatizadas
+
+on:
+  push:
+    branches:
+      - main
+      - "feature/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Pruebas unitarias
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Ejecutar JUnit y Mockito
+        run: mvn -B test
