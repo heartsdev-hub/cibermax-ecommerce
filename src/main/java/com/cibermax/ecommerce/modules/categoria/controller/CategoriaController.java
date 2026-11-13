@@ -1,0 +1,25 @@
+package com.cibermax.ecommerce.modules.categoria.controller;
+
+import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.categoria.dto.response.CategoryResponse;
+import com.cibermax.ecommerce.modules.categoria.service.CategoriaService;
+import com.cibermax.ecommerce.shared.response.ApiResult;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/categorias")
+@RequiredArgsConstructor
+public class CategoriaController {
+    private final CategoriaService categoriaService;
+    @PostMapping
+    public ResponseEntity<ApiResult<CategoryResponse>> create(@Valid @RequestBody CategoryCreateRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.create(request));
+    }
+}
