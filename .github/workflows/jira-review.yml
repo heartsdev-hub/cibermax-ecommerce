@@ -1,0 +1,49 @@
+
+name: Jira - Solicitar revision
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_key:
+        description: 'Clave de Jira (ejemplo CMMRC-2)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  notify-review:
+    name: Solicitar revision en Jira
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enviar solicitud a Jira
+        env:
+          JIRA_URL: ${{ secrets.JIRA_REVIEW_WEBHOOK_URL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_REVIEW_WEBHOOK_TOKEN }}
+          ISSUE_KEY: ${{ inputs.issue_key }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$ISSUE_KEY" =~ ^CMMRC-[0-9]+$ ]]; then
+            echo "Clave Jira invalida"
+            exit 1
+          fi
+
+          if [[ -z "$JIRA_URL" || -z "$JIRA_TOKEN" ]]; then
+            echo "Faltan secretos de Jira"
+            exit 1
+          fi
+
+          jq -n \
+            --arg issueKey "$ISSUE_KEY" \
+            --arg event "ready_for_review" \
+            '{issueKey: $issueKey, event: $event}' > payload.json
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --header "X-Automation-Webhook-Token: $JIRA_TOKEN" \
+            --data @payload.json \
+            "$JIRA_URL"
