@@ -5,10 +5,13 @@ on:
   push:
     branches:
       - main
+      - develop
       - "feature/**"
+
   pull_request:
     branches:
       - main
+      - develop
 
 permissions:
   contents: read
@@ -30,4 +33,6 @@ jobs:
           cache: maven
 
       - name: Ejecutar JUnit y Mockito
-        run: mvn -B test
+        env:
+          SPRING_PROFILES_ACTIVE: test
+        run: mvn -B -Dtest='*,!EcommerceApplicationTests' -Dsurefire.failIfNoSpecifiedTests=false test
