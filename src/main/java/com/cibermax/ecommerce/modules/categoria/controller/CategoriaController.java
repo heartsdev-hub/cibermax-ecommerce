@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -32,6 +33,13 @@ public class CategoriaController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResult<CategoryResponse>> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(categoriaService.findById(id));
+    }
+
+    @GetMapping("/buscar")
+    public ResponseEntity<ApiResult<List<CategoryResponse>>> searchByName(
+            @RequestParam String nombre
+    ) {
+        return ResponseEntity.ok(categoriaService.searchByName(nombre));
     }
 
     @PostMapping

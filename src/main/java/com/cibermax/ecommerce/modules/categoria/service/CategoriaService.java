@@ -46,6 +46,16 @@ public class CategoriaService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public ApiResult<List<CategoryResponse>> searchByName(String nombre) {
+        List<CategoryResponse> categories = categoriaRepository.findByNombreContainingIgnoreCase(nombre)
+                .stream()
+                .map(categoriaMapper::toResponse)
+                .toList();
+
+        return ApiResult.success("Búsqueda de categorías realizada correctamente", categories);
+    }
+
     @Transactional
     public ApiResult<CategoryResponse> create(CategoryCreateRequestDTO request) {
         if (categoriaRepository.existsByNombreIgnoreCase(request.nombre())) {

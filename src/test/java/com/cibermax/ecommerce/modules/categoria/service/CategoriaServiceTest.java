@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -106,6 +107,35 @@ class CategoriaServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining(id.toString());
 
+        verify(categoriaMapper, never()).toResponse(any(Categoria.class));
+    }
+
+    @Test
+    @DisplayName("searchByName retorna las categorías que coinciden con el nombre")
+    void searchByName_returnsMatchingCategories() {
+        UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        Instant timestamp = Instant.parse("2026-01-01T10:00:00Z");
+        Categoria categoria = new Categoria(id, "Tecnología", timestamp, timestamp);
+        CategoryResponse response = new CategoryResponse(id, "Tecnología", timestamp, timestamp);
+        when(categoriaRepository.findByNombreContainingIgnoreCase("tec"))
+                .thenReturn(List.of(categoria));
+        when(categoriaMapper.toResponse(categoria)).thenReturn(response);
+
+        ApiResult<List<CategoryResponse>> result = categoriaService.searchByName("tec");
+
+        assertThat(result.data()).containsExactly(response);
+        verify(categoriaMapper).toResponse(categoria);
+    }
+
+    @Test
+    @DisplayName("searchByName retorna una lista vacía cuando no hay coincidencias")
+    void searchByName_returnsEmptyListWhenThereAreNoMatches() {
+        when(categoriaRepository.findByNombreContainingIgnoreCase("inexistente"))
+                .thenReturn(List.of());
+
+        ApiResult<List<CategoryResponse>> result = categoriaService.searchByName("inexistente");
+
+        assertThat(result.data()).isEmpty();
         verify(categoriaMapper, never()).toResponse(any(Categoria.class));
     }
 }

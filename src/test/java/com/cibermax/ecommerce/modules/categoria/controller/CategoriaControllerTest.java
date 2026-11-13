@@ -128,4 +128,31 @@ class CategoriaControllerTest {
 
         verify(categoriaService, never()).findById(any(UUID.class));
     }
+
+    @Test
+    @DisplayName("GET /api/categorias/buscar responde 200 con coincidencias")
+    void searchByName_returnsOkWithMatches() throws Exception {
+        when(categoriaService.searchByName("tec")).thenReturn(ApiResult.success(
+                "Búsqueda de categorías realizada correctamente",
+                java.util.List.of(response)
+        ));
+
+        mockMvc.perform(get("/api/categorias/buscar").param("nombre", "tec"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].nombre").value("Tecnología"));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/buscar responde 200 sin coincidencias")
+    void searchByName_returnsOkWithEmptyList() throws Exception {
+        when(categoriaService.searchByName("inexistente")).thenReturn(ApiResult.success(
+                "Búsqueda de categorías realizada correctamente",
+                java.util.List.of()
+        ));
+
+        mockMvc.perform(get("/api/categorias/buscar").param("nombre", "inexistente"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
 }
