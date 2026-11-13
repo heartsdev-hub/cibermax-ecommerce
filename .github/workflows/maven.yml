@@ -1,0 +1,91 @@
+
+name: Backend - Pruebas automatizadas
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    name: Pruebas unitarias
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Ejecutar JUnit y Mockito
+        run: mvn -B test
+
+      - name: Notificar pruebas exitosas a Jira
+        if: ${{ github.event_name == 'push' && success() }}
+        env:
+          JIRA_WEBHOOK_URL: ${{ secrets.JIRA_WEBHOOK_URL }}
+          JIRA_WEBHOOK_TOKEN: ${{ secrets.JIRA_WEBHOOK_TOKEN }}
+          BEFORE_SHA: ${{ github.event.before }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$JIRA_WEBHOOK_URL" || -z "$JIRA_WEBHOOK_TOKEN" ]]; then
+            echo "Faltan los secretos de Jira"
+            exit 1
+          fi
+
+          if [[ "$BEFORE_SHA" =~ ^0+$ ]] || ! git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+            MESSAGES=$(git log -1 --format=%B "$GITHUB_SHA")
+          else
+            MESSAGES=$(git log --format=%B "${BEFORE_SHA}..${GITHUB_SHA}")
+          fi
+
+          ISSUE_KEYS=$(printf '%s\n' "$MESSAGES" |
+            grep -oE 'CMMRC-[0-9]+' |
+            sort -u || true)
+
+          if [[ -z "$ISSUE_KEYS" ]]; then
+            echo "No se encontraron claves de Jira en los commits"
+            exit 0
+          fi
+
+          while IFS= read -r ISSUE_KEY; do
+            echo "Notificando resultado para $ISSUE_KEY"
+
+            jq -n \
+              --arg issueKey "$ISSUE_KEY" \
+              --arg status "success" \
+              --arg commit "$GITHUB_SHA" \
+              '{
+                issueKey: $issueKey,
+                status: $status,
+                commit: $commit
+              }' > payload.json
+
+            curl --fail-with-body --silent --show-error \
+              --retry 2 \
+              --request POST \
+              --header "Content-Type: application/json" \
+              --header "X-Automation-Webhook-Token: $JIRA_WEBHOOK_TOKEN" \
+              --data @payload.json \
+              "$JIRA_WEBHOOK_URL"
+
+          done <<< "$ISSUE_KEYS"
