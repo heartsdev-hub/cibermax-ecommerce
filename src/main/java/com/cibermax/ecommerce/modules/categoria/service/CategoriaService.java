@@ -10,6 +10,8 @@ import com.cibermax.ecommerce.shared.response.ApiResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class CategoriaService {
 
@@ -19,6 +21,16 @@ public class CategoriaService {
     public CategoriaService(CategoriaRepository categoriaRepository, CategoriaMapper categoriaMapper) {
         this.categoriaRepository = categoriaRepository;
         this.categoriaMapper = categoriaMapper;
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResult<List<CategoryResponse>> findAll() {
+        List<CategoryResponse> categories = categoriaRepository.findAll()
+                .stream()
+                .map(categoriaMapper::toResponse)
+                .toList();
+
+        return ApiResult.success("Categorías obtenidas correctamente", categories);
     }
 
     @Transactional
