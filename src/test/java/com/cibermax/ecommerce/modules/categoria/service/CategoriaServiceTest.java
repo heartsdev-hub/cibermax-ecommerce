@@ -53,7 +53,7 @@ class CategoriaServiceTest {
 
         when(categoriaRepository.existsByNombreIgnoreCase(request.nombre())).thenReturn(false);
         when(categoriaMapper.toEntity(request)).thenReturn(entity);
-        when(categoriaRepository.save(entity)).thenReturn(savedEntity);
+        when(categoriaRepository.saveAndFlush(entity)).thenReturn(savedEntity);
         when(categoriaMapper.toResponse(savedEntity)).thenReturn(response);
 
         ApiResult<CategoryResponse> result = categoriaService.create(request);
@@ -61,7 +61,7 @@ class CategoriaServiceTest {
         assertThat(result.success()).isTrue();
         assertThat(result.message()).isEqualTo("Categoría creada correctamente");
         assertThat(result.data()).isEqualTo(response);
-        verify(categoriaRepository).save(entity);
+        verify(categoriaRepository).saveAndFlush(entity);
         verify(categoriaMapper).toEntity(request);
         verify(categoriaMapper).toResponse(savedEntity);
     }
@@ -150,7 +150,7 @@ class CategoriaServiceTest {
         CategoryResponse response = new CategoryResponse(id, "Electrónica", timestamp, timestamp);
         when(categoriaRepository.findById(id)).thenReturn(Optional.of(categoria));
         when(categoriaRepository.existsByNombreIgnoreCaseAndIdNot(request.nombre(), id)).thenReturn(false);
-        when(categoriaRepository.save(categoria)).thenReturn(categoria);
+        when(categoriaRepository.saveAndFlush(categoria)).thenReturn(categoria);
         when(categoriaMapper.toResponse(categoria)).thenReturn(response);
 
         ApiResult<CategoryResponse> result = categoriaService.update(id, request);
@@ -159,7 +159,7 @@ class CategoriaServiceTest {
         assertThat(result.message()).isEqualTo("Categoría actualizada correctamente");
         assertThat(result.data()).isEqualTo(response);
         verify(categoriaMapper).updateEntity(request, categoria);
-        verify(categoriaRepository).save(categoria);
+        verify(categoriaRepository).saveAndFlush(categoria);
     }
 
     @Test

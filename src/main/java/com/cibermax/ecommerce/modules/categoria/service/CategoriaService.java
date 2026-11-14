@@ -9,6 +9,9 @@ import com.cibermax.ecommerce.modules.categoria.repository.CategoriaRepository;
 import com.cibermax.ecommerce.shared.exception.DuplicateResourceException;
 import com.cibermax.ecommerce.shared.exception.ResourceNotFoundException;
 import com.cibermax.ecommerce.shared.response.ApiResult;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +28,11 @@ public class CategoriaService {
         this.categoriaRepository = categoriaRepository;
         this.categoriaMapper = categoriaMapper;
     }
-
+    @Cacheable(
+            cacheNames = "categorias:list:v3",
+            key = "'all'",
+            sync = true
+    )
     @Transactional(readOnly = true)
     public ApiResult<List<CategoryResponse>> findAll() {
         List<CategoryResponse> categories = categoriaRepository.findAll()
@@ -35,7 +42,11 @@ public class CategoriaService {
 
         return ApiResult.success("Categorías obtenidas correctamente", categories);
     }
-
+    @Cacheable(
+            cacheNames = "categorias:id:v3",
+            key = "#p0",
+            sync = true 
+    )
     @Transactional(readOnly = true)
     public ApiResult<CategoryResponse> findById(UUID id) {
         Categoria categoria = categoriaRepository.findById(id)
@@ -56,7 +67,10 @@ public class CategoriaService {
 
         return ApiResult.success("Búsqueda de categorías realizada correctamente", categories);
     }
-
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "categorias:list:v3", allEntries = true),
+            @CacheEvict(cacheNames = "categorias:id:v3", allEntries = true)
+    })
     @Transactional
     public ApiResult<CategoryResponse> update(UUID id, CategoryUpdateRequestDT request) {
         Categoria categoria = categoriaRepository.findById(id)
@@ -67,21 +81,24 @@ public class CategoriaService {
         }
 
         categoriaMapper.updateEntity(request, categoria);
-        Categoria updated = categoriaRepository.save(categoria);
+        Categoria updated = categoriaRepository.saveAndFlush(categoria);
 
         return ApiResult.success(
                 "Categoría actualizada correctamente",
                 categoriaMapper.toResponse(updated)
         );
     }
-
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "categorias:list:v3", allEntries = true),
+            @CacheEvict(cacheNames = "categorias:id:v3", allEntries = true)
+    })
     @Transactional
     public ApiResult<CategoryResponse> create(CategoryCreateRequestDTO request) {
         if (categoriaRepository.existsByNombreIgnoreCase(request.nombre())) {
             throw new DuplicateResourceException("Ya existe una categoría con el nombre indicado");
         }
         Categoria categoria = categoriaMapper.toEntity(request);
-        Categoria saved = categoriaRepository.save(categoria);
+        Categoria saved = categoriaRepository.saveAndFlush(categoria);
         return ApiResult.success("Categoría creada correctamente", categoriaMapper.toResponse(saved));
     }
 }

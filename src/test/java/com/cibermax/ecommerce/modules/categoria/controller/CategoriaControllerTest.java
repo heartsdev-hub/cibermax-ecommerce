@@ -59,7 +59,7 @@ class CategoriaControllerTest {
         when(categoriaService.create(any(CategoryCreateRequestDTO.class)))
                 .thenReturn(ApiResult.success("Categoría creada correctamente", response));
 
-        mockMvc.perform(post("/api/categorias")
+        mockMvc.perform(post("/api/v1/categorias")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Tecnología\"}"))
@@ -72,7 +72,7 @@ class CategoriaControllerTest {
     @Test
     @DisplayName("POST /api/categorias responde 400 cuando falta el nombre")
     void create_returnsBadRequestWhenNameIsMissing() throws Exception {
-        mockMvc.perform(post("/api/categorias")
+        mockMvc.perform(post("/api/v1/categorias")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -87,7 +87,7 @@ class CategoriaControllerTest {
         when(categoriaService.create(any(CategoryCreateRequestDTO.class)))
                 .thenThrow(new DuplicateResourceException("Ya existe una categoría con el nombre indicado"));
 
-        mockMvc.perform(post("/api/categorias")
+        mockMvc.perform(post("/api/v1/categorias")
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Tecnología\"}"))
@@ -104,7 +104,7 @@ class CategoriaControllerTest {
                 response
         ));
 
-        mockMvc.perform(get("/api/categorias/{id}", id))
+        mockMvc.perform(get("/api/v1/categorias/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(id.toString()))
@@ -117,7 +117,7 @@ class CategoriaControllerTest {
         when(categoriaService.findById(id))
                 .thenThrow(new ResourceNotFoundException("No se encontró la categoría con id: " + id));
 
-        mockMvc.perform(get("/api/categorias/{id}", id))
+        mockMvc.perform(get("/api/v1/categorias/{id}", id))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
     }
@@ -125,7 +125,7 @@ class CategoriaControllerTest {
     @Test
     @DisplayName("GET /api/categorias/{id} responde 400 con UUID inválido")
     void findById_returnsBadRequestForInvalidUuid() throws Exception {
-        mockMvc.perform(get("/api/categorias/{id}", "uuid-invalido"))
+        mockMvc.perform(get("/api/v1/categorias/{id}", "uuid-invalido"))
                 .andExpect(status().isBadRequest());
 
         verify(categoriaService, never()).findById(any(UUID.class));
@@ -139,7 +139,7 @@ class CategoriaControllerTest {
                 java.util.List.of(response)
         ));
 
-        mockMvc.perform(get("/api/categorias/buscar").param("nombre", "tec"))
+        mockMvc.perform(get("/api/v1/categorias/buscar").param("nombre", "tec"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].nombre").value("Tecnología"));
@@ -153,7 +153,7 @@ class CategoriaControllerTest {
                 java.util.List.of()
         ));
 
-        mockMvc.perform(get("/api/categorias/buscar").param("nombre", "inexistente"))
+        mockMvc.perform(get("/api/v1/categorias/buscar").param("nombre", "inexistente"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isEmpty());
     }
@@ -164,7 +164,7 @@ class CategoriaControllerTest {
         when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
                 .thenReturn(ApiResult.success("Categoría actualizada correctamente", response));
 
-        mockMvc.perform(put("/api/categorias/{id}", id)
+        mockMvc.perform(put("/api/v1/categorias/{id}", id)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Electrónica\"}"))
@@ -176,7 +176,7 @@ class CategoriaControllerTest {
     @Test
     @DisplayName("PUT /api/categorias/{id} responde 400 si falta el nombre")
     void update_returnsBadRequestWhenNameIsMissing() throws Exception {
-        mockMvc.perform(put("/api/categorias/{id}", id)
+        mockMvc.perform(put("/api/v1/categorias/{id}", id)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -191,7 +191,7 @@ class CategoriaControllerTest {
         when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
                 .thenThrow(new ResourceNotFoundException("No se encontró la categoría"));
 
-        mockMvc.perform(put("/api/categorias/{id}", id)
+        mockMvc.perform(put("/api/v1/categorias/{id}", id)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Electrónica\"}"))
@@ -204,7 +204,7 @@ class CategoriaControllerTest {
         when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
                 .thenThrow(new DuplicateResourceException("Ya existe otra categoría con el nombre indicado"));
 
-        mockMvc.perform(put("/api/categorias/{id}", id)
+        mockMvc.perform(put("/api/v1/categorias/{id}", id)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Electrónica\"}"))
