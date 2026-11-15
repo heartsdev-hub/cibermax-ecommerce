@@ -70,7 +70,6 @@ class CategoriaIntegrationTest {
     @DisplayName("conecta con PostgreSQL de Testcontainers")
     void connectsToPostgres() {
         Integer result = jdbcTemplate.queryForObject("SELECT 1", Integer.class);
-
         assertThat(result).isEqualTo(1);
     }
 
