@@ -22,6 +22,6 @@ El puerto `8989` corresponde al valor de referencia definido en `.env.example`; 
 | Módulo | Estado | Documentación |
 |---|---|---|
 | Categorías | Implementado | [API de Categorías](categorias.md) |
-| Subcategorías | Implementado parcialmente: registrar, listar y obtener por ID | [API de Subcategorías](subcategorias.md) |
+| Subcategorías | Implementado: registrar, listar, obtener por ID y actualizar | [API de Subcategorías](subcategorias.md) |
 
 No se encontraron controladores REST implementados para Productos, Usuarios, Inventario, Pedidos, Pagos, Reportes u otros módulos durante la revisión actual. Sus archivos de documentación existentes se conservan sin contenido hasta que haya código verificable que documentar.

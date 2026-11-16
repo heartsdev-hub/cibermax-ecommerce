@@ -2,6 +2,7 @@ package com.cibermax.ecommerce.modules.subCategoria.mapper;
 
 import com.cibermax.ecommerce.modules.categoria.entity.Categoria;
 import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.subCategoria.dto.response.SubCategoryResponse;
 import com.cibermax.ecommerce.modules.subCategoria.entity.SubCategoria;
 import org.junit.jupiter.api.DisplayName;
@@ -56,5 +57,26 @@ class SubCategoriaMapperTest {
         assertThat(response.categoriaNombre()).isEqualTo("Computadoras");
         assertThat(response.createdAt()).isEqualTo(createdAt);
         assertThat(response.updatedAt()).isEqualTo(createdAt);
+    }
+
+    @Test
+    @DisplayName("actualiza únicamente el nombre de la entidad")
+    void updateEntity_updatesOnlyName() {
+        UUID categoriaId = UUID.randomUUID();
+        UUID subCategoriaId = UUID.randomUUID();
+        Instant createdAt = Instant.parse("2026-01-01T10:00:00Z");
+        Instant updatedAt = Instant.parse("2026-01-02T10:00:00Z");
+        Categoria categoria = new Categoria(categoriaId, "Computadoras", null, null);
+        SubCategoria entity = new SubCategoria(
+                subCategoriaId, "Laptops", categoria, createdAt, updatedAt
+        );
+
+        mapper.updateEntity(new SubCategoryUpdateRequestDT("Ultrabooks"), entity);
+
+        assertThat(entity.getNombre()).isEqualTo("Ultrabooks");
+        assertThat(entity.getId()).isEqualTo(subCategoriaId);
+        assertThat(entity.getCategoria()).isSameAs(categoria);
+        assertThat(entity.getCreatedAt()).isEqualTo(createdAt);
+        assertThat(entity.getUpdatedAt()).isEqualTo(updatedAt);
     }
 }

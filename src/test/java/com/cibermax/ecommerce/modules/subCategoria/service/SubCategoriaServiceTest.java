@@ -3,6 +3,7 @@ package com.cibermax.ecommerce.modules.subCategoria.service;
 import com.cibermax.ecommerce.modules.categoria.entity.Categoria;
 import com.cibermax.ecommerce.modules.categoria.repository.CategoriaRepository;
 import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.subCategoria.dto.response.SubCategoryResponse;
 import com.cibermax.ecommerce.modules.subCategoria.entity.SubCategoria;
 import com.cibermax.ecommerce.modules.subCategoria.mapper.SubCategoriaMapper;
@@ -183,5 +184,77 @@ class SubCategoriaServiceTest {
                 .hasMessage("No se encontró la subcategoría con id: " + id);
 
         verify(subCategoriaMapper, never()).toResponse(any(SubCategoria.class));
+    }
+
+    @Test
+    @DisplayName("update modifica el nombre y conserva la categoría padre")
+    void update_changesNameAndReturnsUpdatedSubCategory() {
+        UUID categoriaId = UUID.randomUUID();
+        UUID subCategoriaId = UUID.randomUUID();
+        Instant timestamp = Instant.parse("2026-01-01T10:00:00Z");
+        Categoria categoria = new Categoria(categoriaId, "Computadoras", null, null);
+        SubCategoria entity = new SubCategoria(
+                subCategoriaId, "Laptops", categoria, timestamp, timestamp
+        );
+        SubCategoryUpdateRequestDT request = new SubCategoryUpdateRequestDT("Ultrabooks");
+        SubCategoryResponse response = new SubCategoryResponse(
+                subCategoriaId, "Ultrabooks", categoriaId, "Computadoras", timestamp, timestamp
+        );
+
+        when(subCategoriaRepository.findById(subCategoriaId)).thenReturn(Optional.of(entity));
+        when(subCategoriaRepository.existsByNombreIgnoreCaseAndCategoriaIdAndIdNot(
+                "Ultrabooks", categoriaId, subCategoriaId
+        )).thenReturn(false);
+        when(subCategoriaRepository.saveAndFlush(entity)).thenReturn(entity);
+        when(subCategoriaMapper.toResponse(entity)).thenReturn(response);
+
+        ApiResult<SubCategoryResponse> result = subCategoriaService.update(subCategoriaId, request);
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo("Subcategoría actualizada correctamente");
+        assertThat(result.data()).isEqualTo(response);
+        verify(subCategoriaMapper).updateEntity(request, entity);
+        verify(subCategoriaRepository).saveAndFlush(entity);
+    }
+
+    @Test
+    @DisplayName("update lanza excepción cuando la subcategoría no existe")
+    void update_throwsWhenSubCategoryDoesNotExist() {
+        UUID id = UUID.randomUUID();
+        when(subCategoriaRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> subCategoriaService.update(
+                id, new SubCategoryUpdateRequestDT("Ultrabooks")
+        ))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("No se encontró la subcategoría con id: " + id);
+
+        verify(subCategoriaRepository, never())
+                .existsByNombreIgnoreCaseAndCategoriaIdAndIdNot(any(), any(), any());
+        verify(subCategoriaRepository, never()).saveAndFlush(any(SubCategoria.class));
+    }
+
+    @Test
+    @DisplayName("update rechaza un nombre duplicado dentro de la categoría")
+    void update_rejectsDuplicateNameInParentCategory() {
+        UUID categoriaId = UUID.randomUUID();
+        UUID subCategoriaId = UUID.randomUUID();
+        Categoria categoria = new Categoria(categoriaId, "Computadoras", null, null);
+        SubCategoria entity = new SubCategoria(
+                subCategoriaId, "Laptops", categoria, null, null
+        );
+        when(subCategoriaRepository.findById(subCategoriaId)).thenReturn(Optional.of(entity));
+        when(subCategoriaRepository.existsByNombreIgnoreCaseAndCategoriaIdAndIdNot(
+                "Ultrabooks", categoriaId, subCategoriaId
+        )).thenReturn(true);
+
+        assertThatThrownBy(() -> subCategoriaService.update(
+                subCategoriaId, new SubCategoryUpdateRequestDT("Ultrabooks")
+        ))
+                .isInstanceOf(DuplicateResourceException.class)
+                .hasMessage("Ya existe otra subcategoría con el nombre indicado en la categoría seleccionada");
+
+        verify(subCategoriaMapper, never()).updateEntity(any(), any(SubCategoria.class));
+        verify(subCategoriaRepository, never()).saveAndFlush(any(SubCategoria.class));
     }
 }

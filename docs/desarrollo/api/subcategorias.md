@@ -102,6 +102,55 @@ Respuesta `200 OK`:
 }
 ```
 
+### Editar subcategoría
+
+Modifica únicamente el nombre de una subcategoría. La categoría padre se conserva.
+
+```http
+PUT /api/v1/subcategorias/{id}
+Content-Type: application/json
+```
+
+#### Parámetros de ruta
+
+| Parámetro | Tipo | Obligatorio | Descripción |
+|---|---|---:|---|
+| `id` | `UUID` | Sí | UUID de la subcategoría que se actualizará |
+
+`SubCategoryUpdateRequestDT`:
+
+| Campo | Tipo | Reglas |
+|---|---|---|
+| `nombre` | `String` | Obligatorio, no vacío y máximo 100 caracteres |
+
+Solicitud:
+
+```json
+{
+  "nombre": "Ultrabooks"
+}
+```
+
+Respuesta `200 OK`:
+
+```json
+{
+  "success": true,
+  "message": "Subcategoría actualizada correctamente",
+  "data": {
+    "id": "7c5e3f2e-6d6c-4c2a-8e9d-2f2e4f8f0b11",
+    "nombre": "Ultrabooks",
+    "categoriaId": "550e8400-e29b-41d4-a716-446655440000",
+    "categoriaNombre": "Computadoras",
+    "createdAt": "2026-11-16T10:30:00Z",
+    "updatedAt": "2026-11-16T10:45:00Z"
+  },
+  "timestamp": "2026-11-16T10:45:00Z"
+}
+```
+
+No se permite actualizar a un nombre que ya exista dentro de la misma categoría.
+
 Cuando no existen subcategorías, `data` contiene una lista vacía.
 
 ### Obtener subcategoría por ID
@@ -138,7 +187,7 @@ Respuesta `200 OK`:
 
 | Código HTTP | Situación |
 |---:|---|
-| `400 Bad Request` | `nombre` vacío, ausente o mayor de 100 caracteres; `categoriaId` ausente |
+| `400 Bad Request` | `nombre` vacío, ausente o mayor de 100 caracteres; `categoriaId` ausente; UUID de ruta inválido |
 | `404 Not Found` | La categoría indicada en `categoriaId` o la subcategoría indicada por `id` no existe |
 | `409 Conflict` | Ya existe una subcategoría con el mismo nombre dentro de la categoría |
 | `500 Internal Server Error` | Error interno no controlado |
@@ -159,5 +208,3 @@ Ejemplo de error `404`:
 
 - [Pruebas unitarias de Subcategorías](../../../src/test/java/com/cibermax/ecommerce/modules/subCategoria/)
 - [Pruebas de integración de Subcategorías](../../../src/test/java/com/cibermax/ecommerce/modules/subCategoria/integration/SubCategoriaIntegrationTest.java)
-
-El endpoint de actualización se documentará cuando sea implementado.

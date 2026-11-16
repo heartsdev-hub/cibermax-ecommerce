@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface SubCategoriaRepository extends JpaRepository<SubCategoria, UUID> {
 
     boolean existsByNombreIgnoreCaseAndCategoriaId(String nombre, UUID categoriaId);
+
+    boolean existsByNombreIgnoreCaseAndCategoriaIdAndIdNot(String nombre, UUID categoriaId, UUID id);
 }

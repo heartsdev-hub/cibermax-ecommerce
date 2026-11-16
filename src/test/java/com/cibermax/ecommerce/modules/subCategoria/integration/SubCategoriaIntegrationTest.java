@@ -217,6 +217,76 @@ class SubCategoriaIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @DisplayName("PUT actualiza el nombre y conserva la categoría padre")
+    void update_changesNameAndPersistsIt() throws Exception {
+        Categoria categoria = saveCategory("Computadoras");
+        SubCategoria saved = saveSubCategory("Laptops", categoria);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put(BASE_URL + "/" + saved.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Ultrabooks\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Subcategoría actualizada correctamente"))
+                .andExpect(jsonPath("$.data.nombre").value("Ultrabooks"))
+                .andExpect(jsonPath("$.data.categoriaId").value(categoria.getId().toString()));
+
+        SubCategoria updated = subCategoriaRepository.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getNombre()).isEqualTo("Ultrabooks");
+        assertThat(updated.getCategoria().getId()).isEqualTo(categoria.getId());
+    }
+
+    @Test
+    @DisplayName("PUT responde 404 cuando la subcategoría no existe")
+    void update_rejectsUnknownSubCategory() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put(BASE_URL + "/" + UUID.randomUUID())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Ultrabooks\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT responde 400 cuando el nombre es inválido")
+    void update_rejectsInvalidName() throws Exception {
+        Categoria categoria = saveCategory("Computadoras");
+        SubCategoria saved = saveSubCategory("Laptops", categoria);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put(BASE_URL + "/" + saved.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+
+        assertThat(subCategoriaRepository.findById(saved.getId()).orElseThrow().getNombre())
+                .isEqualTo("Laptops");
+    }
+
+    @Test
+    @DisplayName("PUT responde 409 cuando el nuevo nombre ya existe en la categoría")
+    void update_rejectsDuplicateNameInSameCategory() throws Exception {
+        Categoria categoria = saveCategory("Computadoras");
+        SubCategoria first = saveSubCategory("Laptops", categoria);
+        SubCategoria second = saveSubCategory("Desktops", categoria);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put(BASE_URL + "/" + second.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"laptops\"}"))
+                .andExpect(status().isConflict());
+
+        assertThat(subCategoriaRepository.findById(first.getId()).orElseThrow().getNombre())
+                .isEqualTo("Laptops");
+        assertThat(subCategoriaRepository.findById(second.getId()).orElseThrow().getNombre())
+                .isEqualTo("Desktops");
+    }
+
     private Categoria saveCategory(String nombre) {
         return categoriaRepository.saveAndFlush(new Categoria(null, nombre, null, null));
     }

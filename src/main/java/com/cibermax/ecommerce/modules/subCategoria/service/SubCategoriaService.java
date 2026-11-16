@@ -3,6 +3,7 @@ package com.cibermax.ecommerce.modules.subCategoria.service;
 import com.cibermax.ecommerce.modules.categoria.entity.Categoria;
 import com.cibermax.ecommerce.modules.categoria.repository.CategoriaRepository;
 import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.subCategoria.dto.response.SubCategoryResponse;
 import com.cibermax.ecommerce.modules.subCategoria.entity.SubCategoria;
 import com.cibermax.ecommerce.modules.subCategoria.mapper.SubCategoriaMapper;
@@ -77,6 +78,31 @@ public class SubCategoriaService {
         return ApiResult.success(
                 "Subcategoría obtenida correctamente",
                 subCategoriaMapper.toResponse(subCategoria)
+        );
+    }
+
+    @Transactional
+    public ApiResult<SubCategoryResponse> update(UUID id, SubCategoryUpdateRequestDT request) {
+        SubCategoria subCategoria = subCategoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró la subcategoría con id: " + id
+                ));
+
+        UUID categoriaId = subCategoria.getCategoria().getId();
+        if (subCategoriaRepository.existsByNombreIgnoreCaseAndCategoriaIdAndIdNot(
+                request.nombre(), categoriaId, id
+        )) {
+            throw new DuplicateResourceException(
+                    "Ya existe otra subcategoría con el nombre indicado en la categoría seleccionada"
+            );
+        }
+
+        subCategoriaMapper.updateEntity(request, subCategoria);
+        SubCategoria updated = subCategoriaRepository.saveAndFlush(subCategoria);
+
+        return ApiResult.success(
+                "Subcategoría actualizada correctamente",
+                subCategoriaMapper.toResponse(updated)
         );
     }
 }

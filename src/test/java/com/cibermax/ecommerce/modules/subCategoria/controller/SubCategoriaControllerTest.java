@@ -1,6 +1,7 @@
 package com.cibermax.ecommerce.modules.subCategoria.controller;
 
 import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.subCategoria.dto.response.SubCategoryResponse;
 import com.cibermax.ecommerce.modules.subCategoria.service.SubCategoriaService;
 import com.cibermax.ecommerce.shared.exception.DuplicateResourceException;
@@ -169,5 +170,79 @@ class SubCategoriaControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(subCategoriaService, never()).findById(any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/subcategorias/{id} responde 200 cuando actualiza correctamente")
+    void update_returnsOkWhenRequestIsValid() throws Exception {
+        when(subCategoriaService.update(org.mockito.ArgumentMatchers.eq(subCategoriaId),
+                any(SubCategoryUpdateRequestDT.class)))
+                .thenReturn(ApiResult.success("Subcategoría actualizada correctamente",
+                        new SubCategoryResponse(
+                                subCategoriaId,
+                                "Ultrabooks",
+                                categoriaId,
+                                "Computadoras",
+                                response.createdAt(),
+                                response.updatedAt()
+                        )));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/subcategorias/{id}", subCategoriaId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Ultrabooks\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.nombre").value("Ultrabooks"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/subcategorias/{id} responde 400 con nombre inválido")
+    void update_returnsBadRequestWhenNameIsInvalid() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/subcategorias/{id}", subCategoriaId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(subCategoriaService, never()).update(any(UUID.class), any(SubCategoryUpdateRequestDT.class));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/subcategorias/{id} responde 404 cuando no existe")
+    void update_returnsNotFoundWhenSubCategoryDoesNotExist() throws Exception {
+        when(subCategoriaService.update(org.mockito.ArgumentMatchers.eq(subCategoriaId),
+                any(SubCategoryUpdateRequestDT.class)))
+                .thenThrow(new ResourceNotFoundException(
+                        "No se encontró la subcategoría con id: " + subCategoriaId
+                ));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/subcategorias/{id}", subCategoriaId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Ultrabooks\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/subcategorias/{id} responde 409 cuando el nombre está duplicado")
+    void update_returnsConflictWhenNameIsDuplicated() throws Exception {
+        when(subCategoriaService.update(org.mockito.ArgumentMatchers.eq(subCategoriaId),
+                any(SubCategoryUpdateRequestDT.class)))
+                .thenThrow(new DuplicateResourceException(
+                        "Ya existe otra subcategoría con el nombre indicado en la categoría seleccionada"
+                ));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/api/v1/subcategorias/{id}", subCategoriaId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Ultrabooks\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
     }
 }

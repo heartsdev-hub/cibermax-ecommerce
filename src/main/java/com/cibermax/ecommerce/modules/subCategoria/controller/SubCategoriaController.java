@@ -1,6 +1,7 @@
 package com.cibermax.ecommerce.modules.subCategoria.controller;
 
 import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.subCategoria.dto.request.SubCategoryUpdateRequestDT;
 import com.cibermax.ecommerce.modules.subCategoria.dto.response.SubCategoryResponse;
 import com.cibermax.ecommerce.modules.subCategoria.service.SubCategoriaService;
 import com.cibermax.ecommerce.shared.response.ApiResult;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +29,7 @@ import java.util.UUID;
 
 @Tag(
         name = "Subcategorías",
-        description = "API REST para registrar y consultar subcategorías relacionadas con categorías"
+        description = "API REST para registrar, consultar y actualizar subcategorías relacionadas con categorías"
 )
 @RestController
 @RequestMapping("/api/v1/subcategorias")
@@ -123,5 +125,46 @@ public class SubCategoriaController {
             @PathVariable UUID id
     ) {
         return ResponseEntity.ok(subCategoriaService.findById(id));
+    }
+
+    @Operation(
+            summary = "Actualizar subcategoría",
+            description = "Modifica el nombre de una subcategoría existente sin cambiar su categoría padre."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subcategoría actualizada correctamente"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Datos de entrada o UUID inválidos",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Subcategoría no encontrada",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Ya existe otra subcategoría con ese nombre en la categoría",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResult<SubCategoryResponse>> update(
+            @Parameter(description = "UUID de la subcategoría", required = true)
+            @PathVariable UUID id,
+            @Valid @RequestBody SubCategoryUpdateRequestDT request
+    ) {
+        return ResponseEntity.ok(subCategoriaService.update(id, request));
     }
 }
