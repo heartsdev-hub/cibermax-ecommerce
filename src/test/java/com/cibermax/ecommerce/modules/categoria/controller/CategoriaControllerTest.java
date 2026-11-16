@@ -1,0 +1,213 @@
+package com.cibermax.ecommerce.modules.categoria.controller;
+
+import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryCreateRequestDTO;
+import com.cibermax.ecommerce.modules.categoria.dto.request.CategoryUpdateRequestDT;
+import com.cibermax.ecommerce.modules.categoria.dto.response.CategoryResponse;
+import com.cibermax.ecommerce.modules.categoria.service.CategoriaService;
+import com.cibermax.ecommerce.shared.exception.DuplicateResourceException;
+import com.cibermax.ecommerce.shared.exception.GlobalExceptionHandler;
+import com.cibermax.ecommerce.shared.exception.ResourceNotFoundException;
+import com.cibermax.ecommerce.shared.response.ApiResult;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.Instant;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(CategoriaController.class)
+@Import(GlobalExceptionHandler.class)
+@TestPropertySource(properties = "spring.profiles.active=test")
+@WithMockUser(username = "qa-user")
+class CategoriaControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private CategoriaService categoriaService;
+
+    private final UUID id = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private final CategoryResponse response = new CategoryResponse(
+            id,
+            "Tecnología",
+            Instant.parse("2026-01-01T10:00:00Z"),
+            Instant.parse("2026-01-01T10:00:00Z")
+    );
+
+    @Test
+    @DisplayName("POST /api/categorias responde 201 cuando la categoría es válida")
+    void create_returnsCreated() throws Exception {
+        when(categoriaService.create(any(CategoryCreateRequestDTO.class)))
+                .thenReturn(ApiResult.success("Categoría creada correctamente", response));
+
+        mockMvc.perform(post("/api/v1/categorias")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Tecnología\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(id.toString()))
+                .andExpect(jsonPath("$.data.nombre").value("Tecnología"));
+    }
+
+    @Test
+    @DisplayName("POST /api/categorias responde 400 cuando falta el nombre")
+    void create_returnsBadRequestWhenNameIsMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/categorias")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(categoriaService, never()).create(any(CategoryCreateRequestDTO.class));
+    }
+
+    @Test
+    @DisplayName("POST /api/categorias responde 409 cuando el nombre está duplicado")
+    void create_returnsConflictWhenNameIsDuplicated() throws Exception {
+        when(categoriaService.create(any(CategoryCreateRequestDTO.class)))
+                .thenThrow(new DuplicateResourceException("Ya existe una categoría con el nombre indicado"));
+
+        mockMvc.perform(post("/api/v1/categorias")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Tecnología\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.message").value("Ya existe una categoría con el nombre indicado"));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/{id} responde 200 con el detalle")
+    void findById_returnsOkWithCategoryDetails() throws Exception {
+        when(categoriaService.findById(id)).thenReturn(ApiResult.success(
+                "Categoría obtenida correctamente",
+                response
+        ));
+
+        mockMvc.perform(get("/api/v1/categorias/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(id.toString()))
+                .andExpect(jsonPath("$.data.nombre").value("Tecnología"));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/{id} responde 404 cuando no existe")
+    void findById_returnsNotFoundWhenCategoryDoesNotExist() throws Exception {
+        when(categoriaService.findById(id))
+                .thenThrow(new ResourceNotFoundException("No se encontró la categoría con id: " + id));
+
+        mockMvc.perform(get("/api/v1/categorias/{id}", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/{id} responde 400 con UUID inválido")
+    void findById_returnsBadRequestForInvalidUuid() throws Exception {
+        mockMvc.perform(get("/api/v1/categorias/{id}", "uuid-invalido"))
+                .andExpect(status().isBadRequest());
+
+        verify(categoriaService, never()).findById(any(UUID.class));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/buscar responde 200 con coincidencias")
+    void searchByName_returnsOkWithMatches() throws Exception {
+        when(categoriaService.searchByName("tec")).thenReturn(ApiResult.success(
+                "Búsqueda de categorías realizada correctamente",
+                java.util.List.of(response)
+        ));
+
+        mockMvc.perform(get("/api/v1/categorias/buscar").param("nombre", "tec"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].nombre").value("Tecnología"));
+    }
+
+    @Test
+    @DisplayName("GET /api/categorias/buscar responde 200 sin coincidencias")
+    void searchByName_returnsOkWithEmptyList() throws Exception {
+        when(categoriaService.searchByName("inexistente")).thenReturn(ApiResult.success(
+                "Búsqueda de categorías realizada correctamente",
+                java.util.List.of()
+        ));
+
+        mockMvc.perform(get("/api/v1/categorias/buscar").param("nombre", "inexistente"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    @DisplayName("PUT /api/categorias/{id} responde 200 cuando actualiza")
+    void update_returnsOkWhenCategoryIsUpdated() throws Exception {
+        when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
+                .thenReturn(ApiResult.success("Categoría actualizada correctamente", response));
+
+        mockMvc.perform(put("/api/v1/categorias/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Electrónica\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(id.toString()));
+    }
+
+    @Test
+    @DisplayName("PUT /api/categorias/{id} responde 400 si falta el nombre")
+    void update_returnsBadRequestWhenNameIsMissing() throws Exception {
+        mockMvc.perform(put("/api/v1/categorias/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(categoriaService, never()).update(any(UUID.class), any(CategoryUpdateRequestDT.class));
+    }
+
+    @Test
+    @DisplayName("PUT /api/categorias/{id} responde 404 si no existe")
+    void update_returnsNotFoundWhenCategoryDoesNotExist() throws Exception {
+        when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
+                .thenThrow(new ResourceNotFoundException("No se encontró la categoría"));
+
+        mockMvc.perform(put("/api/v1/categorias/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Electrónica\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /api/categorias/{id} responde 409 si el nombre está duplicado")
+    void update_returnsConflictForDuplicateName() throws Exception {
+        when(categoriaService.update(any(UUID.class), any(CategoryUpdateRequestDT.class)))
+                .thenThrow(new DuplicateResourceException("Ya existe otra categoría con el nombre indicado"));
+
+        mockMvc.perform(put("/api/v1/categorias/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Electrónica\"}"))
+                .andExpect(status().isConflict());
+    }
+}

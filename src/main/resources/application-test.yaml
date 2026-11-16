@@ -1,0 +1,29 @@
+server:
+  port: 0
+
+spring:
+  docker:
+    compose:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  cache:
+    type: redis
+    redis:
+      cache-null-values: false
+      use-key-prefix: true
+
+  data:
+    redis:
+      timeout: 2s
+
+logging:
+  level:
+    org.hibernate.SQL: WARN

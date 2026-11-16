@@ -1,0 +1,60 @@
+
+name: Jira - Finalizar tarea aprobada
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue_key:
+        description: 'Clave de Jira (ejemplo CMMRC-2)'
+        required: true
+        type: string
+      confirm_approval:
+        description: 'Confirmo que la tarea fue revisada y aprobada'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  notify-done:
+    name: Finalizar tarea en Jira
+    if: ${{ inputs.confirm_approval == true }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notificar aprobacion a Jira
+        env:
+          JIRA_URL: ${{ secrets.JIRA_DONE_WEBHOOK_URL }}
+          JIRA_TOKEN: ${{ secrets.JIRA_DONE_WEBHOOK_TOKEN }}
+          ISSUE_KEY: ${{ inputs.issue_key }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$ISSUE_KEY" =~ ^CMMRC-[0-9]+$ ]]; then
+            echo "Clave de Jira invalida"
+            exit 1
+          fi
+
+          if [[ -z "$JIRA_URL" || -z "$JIRA_TOKEN" ]]; then
+            echo "Faltan secretos de Jira"
+            exit 1
+          fi
+
+          jq -n \
+            --arg issueKey "$ISSUE_KEY" \
+            --arg event "approved" \
+            --arg actor "$GITHUB_ACTOR" \
+            '{
+              issueKey: $issueKey,
+              event: $event,
+              actor: $actor
+            }' > payload.json
+
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --header "X-Automation-Webhook-Token: $JIRA_TOKEN" \
+            --data @payload.json \
+            "$JIRA_URL"
