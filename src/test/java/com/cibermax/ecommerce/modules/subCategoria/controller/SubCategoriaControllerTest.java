@@ -19,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -113,5 +114,21 @@ class SubCategoriaControllerTest {
                                 + categoriaId + "\"}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/subcategorias responde 200 con las subcategorías")
+    void findAll_returnsOkWithSubCategories() throws Exception {
+        when(subCategoriaService.findAll()).thenReturn(ApiResult.success(
+                "Subcategorías obtenidas correctamente",
+                List.of(response)
+        ));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/subcategorias"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].nombre").value("Laptops"));
     }
 }

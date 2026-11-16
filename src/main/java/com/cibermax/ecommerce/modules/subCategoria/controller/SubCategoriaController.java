@@ -15,14 +15,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @Tag(
         name = "Subcategorías",
-        description = "API REST para registrar subcategorías relacionadas con categorías"
+        description = "API REST para registrar y consultar subcategorías relacionadas con categorías"
 )
 @RestController
 @RequestMapping("/api/v1/subcategorias")
@@ -73,5 +76,18 @@ public class SubCategoriaController {
             @Valid @RequestBody SubCategoryCreateRequestDTO request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED).body(subCategoriaService.create(request));
+    }
+
+    @Operation(
+            summary = "Listar subcategorías",
+            description = "Obtiene todas las subcategorías registradas con los datos de su categoría padre."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subcategorías obtenidas correctamente"),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @GetMapping
+    public ResponseEntity<ApiResult<List<SubCategoryResponse>>> findAll() {
+        return ResponseEntity.ok(subCategoriaService.findAll());
     }
 }

@@ -13,6 +13,8 @@ import com.cibermax.ecommerce.shared.response.ApiResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class SubCategoriaService {
 
@@ -52,5 +54,15 @@ public class SubCategoriaService {
                 "Subcategoría creada correctamente",
                 subCategoriaMapper.toResponse(saved)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResult<List<SubCategoryResponse>> findAll() {
+        List<SubCategoryResponse> subCategorias = subCategoriaRepository.findAll()
+                .stream()
+                .map(subCategoriaMapper::toResponse)
+                .toList();
+
+        return ApiResult.success("Subcategorías obtenidas correctamente", subCategorias);
     }
 }

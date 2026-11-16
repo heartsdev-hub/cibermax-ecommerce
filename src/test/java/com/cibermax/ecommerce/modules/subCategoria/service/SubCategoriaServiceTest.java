@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -104,5 +105,46 @@ class SubCategoriaServiceTest {
 
         verify(subCategoriaRepository, never()).saveAndFlush(any(SubCategoria.class));
         verify(subCategoriaMapper, never()).toEntity(any(), any(Categoria.class));
+    }
+
+    @Test
+    @DisplayName("findAll retorna las subcategorías con su categoría padre")
+    void findAll_returnsSubCategories() {
+        UUID categoriaId = UUID.randomUUID();
+        UUID firstId = UUID.randomUUID();
+        UUID secondId = UUID.randomUUID();
+        Instant timestamp = Instant.parse("2026-01-01T10:00:00Z");
+        Categoria categoria = new Categoria(categoriaId, "Computadoras", null, null);
+        SubCategoria first = new SubCategoria(firstId, "Laptops", categoria, timestamp, timestamp);
+        SubCategoria second = new SubCategoria(secondId, "Desktops", categoria, timestamp, timestamp);
+        SubCategoryResponse firstResponse = new SubCategoryResponse(
+                firstId, "Laptops", categoriaId, "Computadoras", timestamp, timestamp
+        );
+        SubCategoryResponse secondResponse = new SubCategoryResponse(
+                secondId, "Desktops", categoriaId, "Computadoras", timestamp, timestamp
+        );
+
+        when(subCategoriaRepository.findAll()).thenReturn(List.of(first, second));
+        when(subCategoriaMapper.toResponse(first)).thenReturn(firstResponse);
+        when(subCategoriaMapper.toResponse(second)).thenReturn(secondResponse);
+
+        ApiResult<List<SubCategoryResponse>> result = subCategoriaService.findAll();
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo("Subcategorías obtenidas correctamente");
+        assertThat(result.data()).containsExactly(firstResponse, secondResponse);
+        verify(subCategoriaMapper).toResponse(first);
+        verify(subCategoriaMapper).toResponse(second);
+    }
+
+    @Test
+    @DisplayName("findAll retorna una lista vacía cuando no existen subcategorías")
+    void findAll_returnsEmptyList() {
+        when(subCategoriaRepository.findAll()).thenReturn(List.of());
+
+        ApiResult<List<SubCategoryResponse>> result = subCategoriaService.findAll();
+
+        assertThat(result.data()).isEmpty();
+        verify(subCategoriaMapper, never()).toResponse(any(SubCategoria.class));
     }
 }

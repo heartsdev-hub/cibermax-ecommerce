@@ -159,6 +159,31 @@ class SubCategoriaIntegrationTest {
         assertThat(subCategoriaRepository.count()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("GET lista las subcategorías y muestra su categoría padre")
+    void findAll_returnsPersistedSubCategories() throws Exception {
+        Categoria categoria = saveCategory("Computadoras");
+        saveSubCategory("Laptops", categoria);
+        saveSubCategory("Desktops", categoria);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get(BASE_URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].categoriaId").value(categoria.getId().toString()))
+                .andExpect(jsonPath("$.data[0].categoriaNombre").value("Computadoras"));
+    }
+
+    @Test
+    @DisplayName("GET devuelve una lista vacía cuando no existen subcategorías")
+    void findAll_returnsEmptyList() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get(BASE_URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
     private Categoria saveCategory(String nombre) {
         return categoriaRepository.saveAndFlush(new Categoria(null, nombre, null, null));
     }
