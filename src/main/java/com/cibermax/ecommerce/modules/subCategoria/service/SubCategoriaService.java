@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class SubCategoriaService {
@@ -64,5 +65,18 @@ public class SubCategoriaService {
                 .toList();
 
         return ApiResult.success("Subcategorías obtenidas correctamente", subCategorias);
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResult<SubCategoryResponse> findById(UUID id) {
+        SubCategoria subCategoria = subCategoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró la subcategoría con id: " + id
+                ));
+
+        return ApiResult.success(
+                "Subcategoría obtenida correctamente",
+                subCategoriaMapper.toResponse(subCategoria)
+        );
     }
 }

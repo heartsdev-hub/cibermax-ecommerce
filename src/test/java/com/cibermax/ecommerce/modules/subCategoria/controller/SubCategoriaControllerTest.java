@@ -131,4 +131,43 @@ class SubCategoriaControllerTest {
                 .andExpect(jsonPath("$.data.length()").value(1))
                 .andExpect(jsonPath("$.data[0].nombre").value("Laptops"));
     }
+
+    @Test
+    @DisplayName("GET /api/v1/subcategorias/{id} responde 200 con el detalle")
+    void findById_returnsOkWithSubCategoryDetails() throws Exception {
+        when(subCategoriaService.findById(subCategoriaId)).thenReturn(ApiResult.success(
+                "Subcategoría obtenida correctamente",
+                response
+        ));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/subcategorias/{id}", subCategoriaId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(subCategoriaId.toString()))
+                .andExpect(jsonPath("$.data.nombre").value("Laptops"))
+                .andExpect(jsonPath("$.data.categoriaNombre").value("Computadoras"));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/subcategorias/{id} responde 404 cuando no existe")
+    void findById_returnsNotFoundWhenSubCategoryDoesNotExist() throws Exception {
+        when(subCategoriaService.findById(subCategoriaId))
+                .thenThrow(new ResourceNotFoundException("No se encontró la subcategoría con id: " + subCategoriaId));
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/subcategorias/{id}", subCategoriaId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/subcategorias/{id} responde 400 con UUID inválido")
+    void findById_returnsBadRequestForInvalidUuid() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/v1/subcategorias/{id}", "uuid-invalido"))
+                .andExpect(status().isBadRequest());
+
+        verify(subCategoriaService, never()).findById(any(UUID.class));
+    }
 }

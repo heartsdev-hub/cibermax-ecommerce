@@ -184,6 +184,39 @@ class SubCategoriaIntegrationTest {
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 
+    @Test
+    @DisplayName("GET por ID devuelve una subcategoría existente")
+    void findById_returnsExistingSubCategory() throws Exception {
+        Categoria categoria = saveCategory("Computadoras");
+        SubCategoria saved = saveSubCategory("Laptops", categoria);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get(BASE_URL + "/" + saved.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(saved.getId().toString()))
+                .andExpect(jsonPath("$.data.nombre").value("Laptops"))
+                .andExpect(jsonPath("$.data.categoriaId").value(categoria.getId().toString()))
+                .andExpect(jsonPath("$.data.categoriaNombre").value("Computadoras"));
+    }
+
+    @Test
+    @DisplayName("GET por ID responde 404 cuando la subcategoría no existe")
+    void findById_returnsNotFoundWhenSubCategoryDoesNotExist() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get(BASE_URL + "/" + UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("GET por ID responde 400 cuando el UUID es inválido")
+    void findById_rejectsInvalidUuid() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get(BASE_URL + "/uuid-invalido"))
+                .andExpect(status().isBadRequest());
+    }
+
     private Categoria saveCategory(String nombre) {
         return categoriaRepository.saveAndFlush(new Categoria(null, nombre, null, null));
     }

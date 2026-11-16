@@ -104,12 +104,42 @@ Respuesta `200 OK`:
 
 Cuando no existen subcategorías, `data` contiene una lista vacía.
 
+### Obtener subcategoría por ID
+
+```http
+GET /api/v1/subcategorias/{id}
+```
+
+#### Parámetros de ruta
+
+| Parámetro | Tipo | Obligatorio | Descripción |
+|---|---|---:|---|
+| `id` | `UUID` | Sí | UUID de la subcategoría |
+
+Respuesta `200 OK`:
+
+```json
+{
+  "success": true,
+  "message": "Subcategoría obtenida correctamente",
+  "data": {
+    "id": "7c5e3f2e-6d6c-4c2a-8e9d-2f2e4f8f0b11",
+    "nombre": "Laptops",
+    "categoriaId": "550e8400-e29b-41d4-a716-446655440000",
+    "categoriaNombre": "Computadoras",
+    "createdAt": "2026-11-16T10:30:00Z",
+    "updatedAt": "2026-11-16T10:30:00Z"
+  },
+  "timestamp": "2026-11-16T10:30:00Z"
+}
+```
+
 ## Respuestas de error
 
 | Código HTTP | Situación |
 |---:|---|
 | `400 Bad Request` | `nombre` vacío, ausente o mayor de 100 caracteres; `categoriaId` ausente |
-| `404 Not Found` | La categoría indicada en `categoriaId` no existe |
+| `404 Not Found` | La categoría indicada en `categoriaId` o la subcategoría indicada por `id` no existe |
 | `409 Conflict` | Ya existe una subcategoría con el mismo nombre dentro de la categoría |
 | `500 Internal Server Error` | Error interno no controlado |
 
@@ -130,4 +160,4 @@ Ejemplo de error `404`:
 - [Pruebas unitarias de Subcategorías](../../../src/test/java/com/cibermax/ecommerce/modules/subCategoria/)
 - [Pruebas de integración de Subcategorías](../../../src/test/java/com/cibermax/ecommerce/modules/subCategoria/integration/SubCategoriaIntegrationTest.java)
 
-Los endpoints de detalle por ID y actualización se documentarán cuando sean implementados.
+El endpoint de actualización se documentará cuando sea implementado.

@@ -147,4 +147,41 @@ class SubCategoriaServiceTest {
         assertThat(result.data()).isEmpty();
         verify(subCategoriaMapper, never()).toResponse(any(SubCategoria.class));
     }
+
+    @Test
+    @DisplayName("findById retorna el detalle de una subcategoría existente")
+    void findById_returnsSubCategoryDetails() {
+        UUID categoriaId = UUID.randomUUID();
+        UUID subCategoriaId = UUID.randomUUID();
+        Instant timestamp = Instant.parse("2026-01-01T10:00:00Z");
+        Categoria categoria = new Categoria(categoriaId, "Computadoras", null, null);
+        SubCategoria subCategoria = new SubCategoria(
+                subCategoriaId, "Laptops", categoria, timestamp, timestamp
+        );
+        SubCategoryResponse response = new SubCategoryResponse(
+                subCategoriaId, "Laptops", categoriaId, "Computadoras", timestamp, timestamp
+        );
+        when(subCategoriaRepository.findById(subCategoriaId)).thenReturn(Optional.of(subCategoria));
+        when(subCategoriaMapper.toResponse(subCategoria)).thenReturn(response);
+
+        ApiResult<SubCategoryResponse> result = subCategoriaService.findById(subCategoriaId);
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo("Subcategoría obtenida correctamente");
+        assertThat(result.data()).isEqualTo(response);
+        verify(subCategoriaMapper).toResponse(subCategoria);
+    }
+
+    @Test
+    @DisplayName("findById lanza excepción cuando la subcategoría no existe")
+    void findById_throwsWhenSubCategoryDoesNotExist() {
+        UUID id = UUID.randomUUID();
+        when(subCategoriaRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> subCategoriaService.findById(id))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("No se encontró la subcategoría con id: " + id);
+
+        verify(subCategoriaMapper, never()).toResponse(any(SubCategoria.class));
+    }
 }

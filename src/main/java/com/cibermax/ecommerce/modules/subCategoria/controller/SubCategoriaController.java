@@ -16,12 +16,14 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag(
         name = "Subcategorías",
@@ -89,5 +91,37 @@ public class SubCategoriaController {
     @GetMapping
     public ResponseEntity<ApiResult<List<SubCategoryResponse>>> findAll() {
         return ResponseEntity.ok(subCategoriaService.findAll());
+    }
+
+    @Operation(
+            summary = "Obtener subcategoría por ID",
+            description = "Busca una subcategoría mediante su UUID y devuelve también su categoría padre."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subcategoría obtenida correctamente"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Formato de UUID inválido",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Subcategoría no encontrada",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResult<SubCategoryResponse>> findById(
+            @Parameter(description = "UUID de la subcategoría", required = true)
+            @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(subCategoriaService.findById(id));
     }
 }
