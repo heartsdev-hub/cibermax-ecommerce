@@ -28,10 +28,16 @@ public class Categoria {
     private UUID id;
     @Column(unique = true, nullable = false, length = 100)
     private String nombre;
+    @Column(unique = true, nullable = false, updatable = false)
+    private Integer codigo;
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    public Categoria(UUID id, String nombre, Instant createdAt, Instant updatedAt) {
+        this(id, nombre, null, createdAt, updatedAt);
+    }
 }

@@ -38,6 +38,7 @@ Se utiliza en `PUT /api/v1/categorias/{id}`.
 | Campo | Tipo | Descripción |
 |---|---|---|
 | `id` | `UUID` | Identificador generado |
+| `codigo` | `Integer` | Código numérico asignado automáticamente en incrementos de 10: `10`, `20`, `30`... |
 | `nombre` | `String` | Nombre de la categoría |
 | `createdAt` | `Instant` | Fecha y hora de creación, solo lectura |
 | `updatedAt` | `Instant` | Fecha y hora de última actualización, solo lectura |
@@ -65,6 +66,7 @@ Devuelve `ApiResult<List<CategoryResponse>>`.
   "data": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
+      "codigo": 10,
       "nombre": "Almacenamiento",
       "createdAt": "2026-11-15T10:30:00Z",
       "updatedAt": "2026-11-15T10:30:00Z"
@@ -204,7 +206,7 @@ Mensajes controlados por el servicio:
 
 ## Persistencia relacionada
 
-La entidad `Categoria` se persiste en la tabla `categorias` con un UUID, nombre único, `created_at` y `updated_at`.
+La entidad `Categoria` se persiste en la tabla `categorias` con un UUID, código numérico único, nombre único, `created_at` y `updated_at`. El código comienza en `10` y aumenta de diez en diez.
 
 ## Pruebas relacionadas
 

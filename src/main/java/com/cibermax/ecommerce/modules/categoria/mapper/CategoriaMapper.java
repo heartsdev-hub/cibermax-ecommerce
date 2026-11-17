@@ -12,6 +12,7 @@ import org.mapstruct.MappingTarget;
 public interface CategoriaMapper {
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "codigo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Categoria toEntity(CategoryCreateRequestDTO request);
@@ -19,6 +20,7 @@ public interface CategoriaMapper {
     CategoryResponse toResponse(Categoria entity);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "codigo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(CategoryUpdateRequestDT request, @MappingTarget Categoria entity);
