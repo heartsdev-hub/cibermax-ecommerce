@@ -23,5 +23,6 @@ El puerto `8989` corresponde al valor de referencia definido en `.env.example`; 
 |---|---|---|
 | Categorías | Implementado | [API de Categorías](categorias.md) |
 | Clasess | Implementado: registrar, listar, obtener por ID y actualizar | [API de Clasess](clasess.md) |
+| Subclases | Implementado: registrar con código basado en la Clasess | [API de Subclases](subclase.md) |
 
 No se encontraron controladores REST implementados para Productos, Subcategorías, Usuarios, Inventario, Pedidos, Pagos, Reportes u otros módulos durante la revisión actual. Sus archivos de documentación existentes se conservan sin contenido hasta que haya código verificable que documentar.
