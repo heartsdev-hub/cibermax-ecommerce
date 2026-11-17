@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -98,7 +100,19 @@ public class CategoriaService {
             throw new DuplicateResourceException("Ya existe una categoría con el nombre indicado");
         }
         Categoria categoria = categoriaMapper.toEntity(request);
+        categoria.setCodigo(nextCategoryCode());
         Categoria saved = categoriaRepository.saveAndFlush(categoria);
         return ApiResult.success("Categoría creada correctamente", categoriaMapper.toResponse(saved));
+    }
+
+    private int nextCategoryCode() {
+        Optional<Categoria> lastCategory = Optional.ofNullable(
+                categoriaRepository.findTopByOrderByCodigoDesc()
+        ).orElse(Optional.empty());
+
+        return lastCategory.map(Categoria::getCodigo)
+                .filter(Objects::nonNull)
+                .map(code -> code + 10)
+                .orElse(10);
     }
 }

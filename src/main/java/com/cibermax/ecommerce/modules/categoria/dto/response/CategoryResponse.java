@@ -14,6 +14,12 @@ public record CategoryResponse(
         )
         UUID id,
         @Schema(
+                description = "Código numérico de la categoría",
+                example = "10",
+                accessMode = Schema.AccessMode.READ_ONLY
+        )
+        Integer codigo,
+        @Schema(
                 description = "Nombre de la categoría",
                 example = "Almacenamiento"
         )
@@ -31,4 +37,8 @@ public record CategoryResponse(
         )
         Instant updatedAt
 ) {
+
+    public CategoryResponse(UUID id, String nombre, Instant createdAt, Instant updatedAt) {
+        this(id, null, nombre, createdAt, updatedAt);
+    }
 }

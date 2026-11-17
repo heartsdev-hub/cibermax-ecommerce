@@ -132,7 +132,7 @@ public class CategoriaController {
     }
     @Operation(
             summary = "Crear categoría",
-            description = "Registra una nueva categoría. No permite nombres duplicados."
+            description = "Registra una nueva categoría y asigna automáticamente el siguiente código múltiplo de 10."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Categoría creada correctamente"),
