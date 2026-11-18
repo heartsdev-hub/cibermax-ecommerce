@@ -19,8 +19,8 @@ class SubclaseMapperTest {
     @Test
     void mapsRequestAndClassToEntity() {
         UUID clasessId = UUID.randomUUID();
-        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", 10, null, null);
-        Clasess clasess = new Clasess(clasessId, 1010, "Audífonos", categoria, null, null);
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(clasessId, "1010", "Audífonos", categoria, null, null);
         SubclaseCreateRequest request = new SubclaseCreateRequest("Inalámbricos", clasessId);
 
         Subclase entity = mapper.toEntity(request, clasess);
@@ -32,13 +32,13 @@ class SubclaseMapperTest {
 
     @Test
     void mapsEntityWithCategoryAndClassDataToResponse() {
-        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", 10, null, null);
-        Clasess clasess = new Clasess(UUID.randomUUID(), 1010, "Audífonos", categoria, null, null);
-        Subclase entity = new Subclase(UUID.randomUUID(), 101020, "Inalámbricos", clasess, null, null);
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(UUID.randomUUID(), "1010", "Audífonos", categoria, null, null);
+        Subclase entity = new Subclase(UUID.randomUUID(), "101020", "Inalámbricos", clasess, null, null);
 
         SubclaseResponse response = mapper.toResponse(entity);
 
-        assertThat(response.codigo()).isEqualTo(101020);
+        assertThat(response.codigo()).isEqualTo("101020");
         assertThat(response.nombre()).isEqualTo("Inalámbricos");
         assertThat(response.categoria()).isEqualTo("Audio");
         assertThat(response.clase()).isEqualTo("Audífonos");

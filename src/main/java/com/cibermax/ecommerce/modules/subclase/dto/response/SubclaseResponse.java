@@ -10,7 +10,7 @@ public record SubclaseResponse(
         @Schema(description = "Identificador único", accessMode = Schema.AccessMode.READ_ONLY)
         UUID id,
         @Schema(description = "Código compuesto por el código de la Clasess y la secuencia de subclase", example = "101010")
-        Integer codigo,
+        String codigo,
         @Schema(description = "Nombre de la subclase", example = "Audífonos inalámbricos")
         String nombre,
         @Schema(description = "Nombre de la categoría asociada", example = "Audio", accessMode = Schema.AccessMode.READ_ONLY)

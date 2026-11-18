@@ -42,8 +42,8 @@ public class Subclase {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true, updatable = false)
-    private Integer codigo;
+    @Column(nullable = false, unique = true, updatable = false, length = 20)
+    private String codigo;
 
     @Column(nullable = false, length = 100)
     private String nombre;

@@ -45,7 +45,7 @@ class ClasessControllerTest {
     void create_returnsCreated() throws Exception {
         UUID categoriaId = UUID.randomUUID();
         ClasessResponse response = new ClasessResponse(
-                UUID.randomUUID(), 1010, "Audífonos", "Audio", null, null
+                UUID.randomUUID(), "1010", "Audífonos", "Audio", null, null
         );
         when(clasessService.create(any(ClasessCreateRequest.class)))
                 .thenReturn(ApiResult.success("Clasess creada correctamente", response));
@@ -55,7 +55,7 @@ class ClasessControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Audífonos\",\"categoriaId\":\"" + categoriaId + "\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.codigo").value(1010))
+                .andExpect(jsonPath("$.data.codigo").value("1010"))
                 .andExpect(jsonPath("$.data.categoria").value("Audio"))
                 .andExpect(jsonPath("$.data.categoriaId").doesNotExist())
                 .andExpect(jsonPath("$.data.categoriaCodigo").doesNotExist());
@@ -88,7 +88,7 @@ class ClasessControllerTest {
     @Test
     void findAll_returnsOk() throws Exception {
         ClasessResponse response = new ClasessResponse(
-                UUID.randomUUID(), 1010, "Audífonos", "Audio", null, null
+                UUID.randomUUID(), "1010", "Audífonos", "Audio", null, null
         );
         when(clasessService.findAll()).thenReturn(ApiResult.success(
                 "Clasess obtenidas correctamente", java.util.List.of(response)
@@ -97,14 +97,14 @@ class ClasessControllerTest {
         mockMvc.perform(get("/api/v1/clasess"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].codigo").value(1010))
+                .andExpect(jsonPath("$.data[0].codigo").value("1010"))
                 .andExpect(jsonPath("$.data[0].categoria").value("Audio"));
     }
 
     @Test
     void findById_returnsOk() throws Exception {
         UUID id = UUID.randomUUID();
-        ClasessResponse response = new ClasessResponse(id, 1010, "Audífonos", "Audio", null, null);
+        ClasessResponse response = new ClasessResponse(id, "1010", "Audífonos", "Audio", null, null);
         when(clasessService.findById(id)).thenReturn(ApiResult.success(
                 "Clasess obtenida correctamente", response
         ));
@@ -112,7 +112,7 @@ class ClasessControllerTest {
         mockMvc.perform(get("/api/v1/clasess/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(id.toString()))
-                .andExpect(jsonPath("$.data.codigo").value(1010));
+                .andExpect(jsonPath("$.data.codigo").value("1010"));
     }
 
     @Test
@@ -137,7 +137,7 @@ class ClasessControllerTest {
     void update_returnsOk() throws Exception {
         UUID id = UUID.randomUUID();
         ClasessResponse response = new ClasessResponse(
-                id, 1010, "Audífonos inalámbricos", "Audio", null, null
+                id, "1010", "Audífonos inalámbricos", "Audio", null, null
         );
         when(clasessService.update(any(UUID.class), any(ClasessUpdateRequest.class)))
                 .thenReturn(ApiResult.success("Clasess actualizada correctamente", response));
@@ -147,7 +147,7 @@ class ClasessControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Audífonos inalámbricos\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.codigo").value(1010))
+                .andExpect(jsonPath("$.data.codigo").value("1010"))
                 .andExpect(jsonPath("$.data.nombre").value("Audífonos inalámbricos"));
     }
 

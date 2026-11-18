@@ -16,9 +16,12 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(name = "Subclases", description = "API REST para registrar subclases asociadas a una Clasess")
 @RestController
@@ -29,6 +32,19 @@ public class SubclaseController {
 
     public SubclaseController(SubclaseService subclaseService) {
         this.subclaseService = subclaseService;
+    }
+
+    @Operation(
+            summary = "Listar subclases",
+            description = "Obtiene todas las subclases ordenadas por código ascendente."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subclases obtenidas correctamente"),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @GetMapping
+    public ResponseEntity<ApiResult<List<SubclaseResponse>>> findAll() {
+        return ResponseEntity.ok(subclaseService.findAll());
     }
 
     @Operation(

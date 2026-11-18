@@ -12,6 +12,7 @@
 - URL base: `/api/v1/subclases`.
 - Cada subclase pertenece a una `Clasess` existente; la categoría se obtiene de esa relación.
 - La respuesta exitosa usa `ApiResult<SubclaseResponse>`.
+- Los campos `codigo` de `Categoria`, `Clasess` y `Subclase` se manejan como `String` para conservar la composición jerárquica sin pérdidas de formato.
 
 ## Código de subclase
 
@@ -31,6 +32,14 @@ El código se genera usando el código de la `Clasess` como prefijo y una secuen
 |---|---|---|
 | `nombre` | `String` | Obligatorio, no vacío y máximo 100 caracteres |
 | `clasessId` | `UUID` | Obligatorio; debe identificar una Clasess existente |
+
+## Listar subclases
+
+```http
+GET /api/v1/subclases
+```
+
+Devuelve `200 OK` con todas las subclases ordenadas por `codigo`. Si no existen registros, `data` es una lista vacía.
 
 ## Registrar subclase
 
@@ -56,7 +65,7 @@ Respuesta `201 Created` para una Clasess con código `1010`:
   "message": "Subclase creada correctamente",
   "data": {
     "id": "7c5e3f2e-6d6c-4c2a-8e9d-2f2e4f8f0b11",
-    "codigo": 101010,
+    "codigo": "101010",
     "nombre": "Inalámbricos",
     "categoria": "Audio",
     "clase": "Audífonos",

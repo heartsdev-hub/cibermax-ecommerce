@@ -23,13 +23,27 @@ public interface SubclaseMapper {
     @Mapping(target = "codigo", expression = "java(formatCodigo(entity))")
     SubclaseResponse toResponse(Subclase entity);
 
-    default Integer formatCodigo(Subclase entity) {
+    default String formatCodigo(Subclase entity) {
         if (entity.getCodigo() == null
                 || entity.getClasess() == null
                 || entity.getClasess().getCodigo() == null) {
             return entity.getCodigo();
         }
 
-        return entity.getClasess().getCodigo() * 100 + Math.abs(entity.getCodigo()) % 100;
+        String classCode = String.valueOf(entity.getClasess().getCodigo());
+        int sequence = extractSequence(entity.getCodigo(), classCode);
+        return classCode + sequence;
+    }
+
+    default int extractSequence(String code, String classCode) {
+        String sequence = code.startsWith(classCode)
+                ? code.substring(classCode.length())
+                : code.substring(Math.max(0, code.length() - 2));
+
+        try {
+            return Integer.parseInt(sequence);
+        } catch (NumberFormatException exception) {
+            return 0;
+        }
     }
 }

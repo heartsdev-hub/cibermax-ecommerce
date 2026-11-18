@@ -23,6 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,7 +42,7 @@ class SubclaseControllerTest {
     void create_returnsCreated() throws Exception {
         UUID clasessId = UUID.randomUUID();
         SubclaseResponse response = new SubclaseResponse(
-                UUID.randomUUID(), 101010, "Inalámbricos", "Audio", "Audífonos", null, null
+                UUID.randomUUID(), "101010", "Inalámbricos", "Audio", "Audífonos", null, null
         );
         when(subclaseService.create(any(SubclaseCreateRequest.class)))
                 .thenReturn(ApiResult.success("Subclase creada correctamente", response));
@@ -51,7 +52,7 @@ class SubclaseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Inalámbricos\",\"clasessId\":\"" + clasessId + "\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.codigo").value(101010))
+                .andExpect(jsonPath("$.data.codigo").value("101010"))
                 .andExpect(jsonPath("$.data.categoria").value("Audio"))
                 .andExpect(jsonPath("$.data.clase").value("Audífonos"));
     }
@@ -78,5 +79,32 @@ class SubclaseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Inalámbricos\",\"clasessId\":\"" + clasessId + "\"}"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void findAll_returnsOkWithSubclases() throws Exception {
+        SubclaseResponse response = new SubclaseResponse(
+                UUID.randomUUID(), "101010", "Inalámbricos", "Audio", "Audífonos", null, null
+        );
+        when(subclaseService.findAll()).thenReturn(ApiResult.success(
+                "Subclases obtenidas correctamente", java.util.List.of(response)
+        ));
+
+        mockMvc.perform(get("/api/v1/subclases"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].codigo").value("101010"))
+                .andExpect(jsonPath("$.data[0].clase").value("Audífonos"));
+    }
+
+    @Test
+    void findAll_returnsEmptyList() throws Exception {
+        when(subclaseService.findAll()).thenReturn(ApiResult.success(
+                "Subclases obtenidas correctamente", java.util.List.of()
+        ));
+
+        mockMvc.perform(get("/api/v1/subclases"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
     }
 }

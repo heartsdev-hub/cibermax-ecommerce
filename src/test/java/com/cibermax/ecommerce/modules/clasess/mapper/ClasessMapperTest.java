@@ -18,7 +18,7 @@ class ClasessMapperTest {
     @Test
     void mapsRequestAndCategoryToEntity() {
         UUID categoriaId = UUID.randomUUID();
-        Categoria categoria = new Categoria(categoriaId, "Audio", 10, null, null);
+        Categoria categoria = new Categoria(categoriaId, "Audio", "10", null, null);
         ClasessCreateRequest request = new ClasessCreateRequest("Audífonos", categoriaId);
 
         Clasess entity = mapper.toEntity(request, categoria);
@@ -31,12 +31,12 @@ class ClasessMapperTest {
     @Test
     void mapsEntityWithCategoryDataToResponse() {
         UUID categoriaId = UUID.randomUUID();
-        Categoria categoria = new Categoria(categoriaId, "Audio", 10, null, null);
-        Clasess entity = new Clasess(UUID.randomUUID(), 6050, "Audífonos", categoria, null, null);
+        Categoria categoria = new Categoria(categoriaId, "Audio", "10", null, null);
+        Clasess entity = new Clasess(UUID.randomUUID(), "1050", "Audífonos", categoria, null, null);
 
         ClasessResponse response = mapper.toResponse(entity);
 
-        assertThat(response.codigo()).isEqualTo(1050);
+        assertThat(response.codigo()).isEqualTo("1050");
         assertThat(response.categoria()).isEqualTo("Audio");
     }
 }

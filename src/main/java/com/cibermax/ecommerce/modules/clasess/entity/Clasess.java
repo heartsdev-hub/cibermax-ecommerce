@@ -43,7 +43,7 @@ public class Clasess {
     private UUID id;
 
     @Column(nullable = false, unique = true, updatable = false)
-    private Integer codigo;
+    private String codigo;
 
     @Column(nullable = false, length = 100)
     private String nombre;

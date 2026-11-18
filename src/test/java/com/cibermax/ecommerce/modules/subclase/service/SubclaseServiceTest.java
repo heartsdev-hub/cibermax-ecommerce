@@ -46,12 +46,12 @@ class SubclaseServiceTest {
     @Test
     void create_generatesFirstCodeFromClassCode() {
         UUID clasessId = UUID.randomUUID();
-        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", 10, null, null);
-        Clasess clasess = new Clasess(clasessId, 1010, "Audífonos", categoria, null, null);
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(clasessId, "1010", "Audífonos", categoria, null, null);
         Subclase entity = new Subclase(null, null, "Inalámbricos", clasess, null, null);
-        Subclase saved = new Subclase(UUID.randomUUID(), 101010, "Inalámbricos", clasess, null, null);
+        Subclase saved = new Subclase(UUID.randomUUID(), "101010", "Inalámbricos", clasess, null, null);
         SubclaseResponse response = new SubclaseResponse(
-                saved.getId(), 101010, "Inalámbricos", "Audio", "Audífonos", null, null
+                saved.getId(), "101010", "Inalámbricos", "Audio", "Audífonos", null, null
         );
         SubclaseCreateRequest request = new SubclaseCreateRequest("Inalámbricos", clasessId);
 
@@ -66,7 +66,7 @@ class SubclaseServiceTest {
 
         ApiResult<SubclaseResponse> result = subclaseService.create(request);
 
-        assertThat(entity.getCodigo()).isEqualTo(101010);
+        assertThat(entity.getCodigo()).isEqualTo("101010");
         assertThat(result.data()).isEqualTo(response);
         verify(subclaseRepository).saveAndFlush(entity);
     }
@@ -74,9 +74,9 @@ class SubclaseServiceTest {
     @Test
     void create_incrementsCodeForSameClass() {
         UUID clasessId = UUID.randomUUID();
-        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", 10, null, null);
-        Clasess clasess = new Clasess(clasessId, 1020, "Parlantes", categoria, null, null);
-        Subclase previous = new Subclase(UUID.randomUUID(), 102010, "Bluetooth", clasess, null, null);
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(clasessId, "1020", "Parlantes", categoria, null, null);
+        Subclase previous = new Subclase(UUID.randomUUID(), "102010", "Bluetooth", clasess, null, null);
         Subclase entity = new Subclase(null, null, "Portátiles", clasess, null, null);
         SubclaseCreateRequest request = new SubclaseCreateRequest("Portátiles", clasessId);
 
@@ -91,7 +91,7 @@ class SubclaseServiceTest {
 
         subclaseService.create(request);
 
-        assertThat(entity.getCodigo()).isEqualTo(102020);
+        assertThat(entity.getCodigo()).isEqualTo("102020");
     }
 
     @Test
@@ -109,8 +109,8 @@ class SubclaseServiceTest {
     @Test
     void create_rejectsDuplicateName() {
         UUID clasessId = UUID.randomUUID();
-        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", 10, null, null);
-        Clasess clasess = new Clasess(clasessId, 1010, "Audífonos", categoria, null, null);
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(clasessId, "1010", "Audífonos", categoria, null, null);
         when(clasessRepository.findById(clasessId)).thenReturn(Optional.of(clasess));
         when(subclaseRepository.existsByNombreIgnoreCaseAndClasessId("Inalámbricos", clasessId))
                 .thenReturn(true);
@@ -120,5 +120,22 @@ class SubclaseServiceTest {
         )).isInstanceOf(DuplicateResourceException.class);
 
         verify(subclaseRepository, never()).saveAndFlush(any(Subclase.class));
+    }
+
+    @Test
+    void findAll_returnsMappedSubclases() {
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(UUID.randomUUID(), "1010", "Audífonos", categoria, null, null);
+        Subclase entity = new Subclase(UUID.randomUUID(), "101010", "Inalámbricos", clasess, null, null);
+        SubclaseResponse response = new SubclaseResponse(
+                entity.getId(), "101010", "Inalámbricos", "Audio", "Audífonos", null, null
+        );
+
+        when(subclaseRepository.findAllByOrderByCodigoAsc()).thenReturn(List.of(entity));
+        when(subclaseMapper.toResponse(entity)).thenReturn(response);
+
+        ApiResult<List<SubclaseResponse>> result = subclaseService.findAll();
+
+        assertThat(result.data()).containsExactly(response);
     }
 }

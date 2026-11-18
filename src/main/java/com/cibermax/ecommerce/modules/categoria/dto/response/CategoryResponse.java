@@ -14,11 +14,11 @@ public record CategoryResponse(
         )
         UUID id,
         @Schema(
-                description = "Código numérico de la categoría",
+                description = "Código de la categoría",
                 example = "10",
                 accessMode = Schema.AccessMode.READ_ONLY
         )
-        Integer codigo,
+        String codigo,
         @Schema(
                 description = "Nombre de la categoría",
                 example = "Almacenamiento"

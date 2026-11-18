@@ -8,6 +8,8 @@ import java.util.UUID;
 
 public interface SubclaseRepository extends JpaRepository<Subclase, UUID> {
 
+    List<Subclase> findAllByOrderByCodigoAsc();
+
     List<Subclase> findByClasessIdOrderByCodigoAsc(UUID clasessId);
 
     boolean existsByNombreIgnoreCaseAndClasessId(String nombre, UUID clasessId);

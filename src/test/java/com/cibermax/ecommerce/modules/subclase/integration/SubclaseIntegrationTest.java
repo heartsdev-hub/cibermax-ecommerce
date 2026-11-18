@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -63,7 +64,7 @@ class SubclaseIntegrationTest {
     @Test
     @DisplayName("POST registra una subclase con código basado en la Clasess")
     void create_persistsSubclaseAndHierarchy() throws Exception {
-        Clasess clasess = saveClasess("Audio", 10, "Audífonos", 1010);
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1010");
 
         mockMvc.perform(post(BASE_URL)
                         .with(csrf())
@@ -71,7 +72,7 @@ class SubclaseIntegrationTest {
                         .content("{\"nombre\":\"Inalámbricos\",\"clasessId\":\"" + clasess.getId() + "\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.codigo").value(101010))
+                .andExpect(jsonPath("$.data.codigo").value("101010"))
                 .andExpect(jsonPath("$.data.nombre").value("Inalámbricos"))
                 .andExpect(jsonPath("$.data.categoria").value("Audio"))
                 .andExpect(jsonPath("$.data.clase").value("Audífonos"))
@@ -79,7 +80,7 @@ class SubclaseIntegrationTest {
                 .andExpect(jsonPath("$.data.updatedAt").isNotEmpty());
 
         Subclase saved = subclaseRepository.findAll().get(0);
-        assertThat(saved.getCodigo()).isEqualTo(101010);
+        assertThat(saved.getCodigo()).isEqualTo("101010");
         assertThat(saved.getClasess().getId()).isEqualTo(clasess.getId());
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
@@ -88,9 +89,9 @@ class SubclaseIntegrationTest {
     @Test
     @DisplayName("POST incrementa el código de subclase dentro de la misma Clasess")
     void create_incrementsCodeForSameClass() throws Exception {
-        Clasess clasess = saveClasess("Audio", 10, "Audífonos", 1020);
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1020");
         subclaseRepository.saveAndFlush(
-                new Subclase(null, 102010, "Bluetooth", clasess, null, null)
+                new Subclase(null, "102010", "Bluetooth", clasess, null, null)
         );
 
         mockMvc.perform(post(BASE_URL)
@@ -98,7 +99,7 @@ class SubclaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Portátiles\",\"clasessId\":\"" + clasess.getId() + "\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.codigo").value(102020));
+                .andExpect(jsonPath("$.data.codigo").value("102020"));
     }
 
     @Test
@@ -116,7 +117,7 @@ class SubclaseIntegrationTest {
     @Test
     @DisplayName("POST rechaza un nombre vacío")
     void create_rejectsBlankName() throws Exception {
-        Clasess clasess = saveClasess("Audio", 10, "Audífonos", 1010);
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1010");
 
         mockMvc.perform(post(BASE_URL)
                         .with(csrf())
@@ -130,9 +131,9 @@ class SubclaseIntegrationTest {
     @Test
     @DisplayName("POST rechaza una subclase duplicada dentro de la misma Clasess")
     void create_rejectsDuplicateName() throws Exception {
-        Clasess clasess = saveClasess("Audio", 10, "Audífonos", 1010);
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1010");
         subclaseRepository.saveAndFlush(
-                new Subclase(null, 101010, "Inalámbricos", clasess, null, null)
+                new Subclase(null, "101010", "Inalámbricos", clasess, null, null)
         );
 
         mockMvc.perform(post(BASE_URL)
@@ -144,7 +145,33 @@ class SubclaseIntegrationTest {
         assertThat(subclaseRepository.count()).isEqualTo(1);
     }
 
-    private Clasess saveClasess(String categoriaNombre, int categoriaCodigo, String nombre, int codigo) {
+    @Test
+    @DisplayName("GET lista las subclases con código String")
+    void findAll_returnsPersistedSubclases() throws Exception {
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1010");
+        subclaseRepository.saveAndFlush(
+                new Subclase(null, "101020", "Portátiles", clasess, null, null)
+        );
+        subclaseRepository.saveAndFlush(
+                new Subclase(null, "101010", "Inalámbricos", clasess, null, null)
+        );
+
+        mockMvc.perform(get(BASE_URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data[0].codigo").value("101010"))
+                .andExpect(jsonPath("$.data[1].codigo").value("101020"));
+    }
+
+    @Test
+    @DisplayName("GET devuelve una lista vacía cuando no existen subclases")
+    void findAll_returnsEmptyList() throws Exception {
+        mockMvc.perform(get(BASE_URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    private Clasess saveClasess(String categoriaNombre, String categoriaCodigo, String nombre, String codigo) {
         Categoria categoria = categoriaRepository.saveAndFlush(
                 new Categoria(null, categoriaNombre, categoriaCodigo, null, null)
         );

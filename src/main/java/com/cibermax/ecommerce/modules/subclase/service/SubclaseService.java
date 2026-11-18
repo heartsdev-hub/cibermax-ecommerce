@@ -19,7 +19,6 @@ import java.util.List;
 public class SubclaseService {
 
     private static final int CODE_STEP = 10;
-    private static final int CODE_BASE = 100;
 
     private final SubclaseRepository subclaseRepository;
     private final ClasessRepository clasessRepository;
@@ -60,21 +59,41 @@ public class SubclaseService {
         );
     }
 
-    private int nextSubclaseCode(Clasess clasess) {
+    @Transactional(readOnly = true)
+    public ApiResult<List<SubclaseResponse>> findAll() {
+        List<SubclaseResponse> subclases = subclaseRepository.findAllByOrderByCodigoAsc()
+                .stream()
+                .map(subclaseMapper::toResponse)
+                .toList();
+
+        return ApiResult.success("Subclases obtenidas correctamente", subclases);
+    }
+
+    private String nextSubclaseCode(Clasess clasess) {
         List<Subclase> subclases = subclaseRepository.findByClasessIdOrderByCodigoAsc(clasess.getId());
+        String classCode = String.valueOf(clasess.getCodigo());
         int nextSequence = subclases.stream()
                 .map(Subclase::getCodigo)
-                .mapToInt(this::extractSequence)
+                .mapToInt(code -> extractSequence(code, classCode))
                 .max()
                 .orElse(0) + CODE_STEP;
 
-        return clasess.getCodigo() * CODE_BASE + nextSequence;
+        return classCode + nextSequence;
     }
 
-    private int extractSequence(Integer code) {
-        if (code == null) {
+    private int extractSequence(String code, String classCode) {
+        if (code == null || code.isBlank()) {
             return 0;
         }
-        return Math.abs(code) % CODE_BASE;
+
+        String sequence = code.startsWith(classCode)
+                ? code.substring(classCode.length())
+                : code.substring(Math.max(0, code.length() - 2));
+
+        try {
+            return Integer.parseInt(sequence);
+        } catch (NumberFormatException exception) {
+            return 0;
+        }
     }
 }
