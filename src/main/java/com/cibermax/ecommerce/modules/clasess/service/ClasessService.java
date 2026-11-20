@@ -20,7 +20,6 @@ import java.util.List;
 public class ClasessService {
 
     private static final int CODE_STEP = 10;
-    private static final int CODE_BASE = 100;
 
     private final ClasessRepository clasessRepository;
     private final CategoriaRepository categoriaRepository;
@@ -108,21 +107,31 @@ public class ClasessService {
         );
     }
 
-    private int nextClassCode(Categoria categoria) {
+    private String nextClassCode(Categoria categoria) {
         List<Clasess> classes = clasessRepository.findByCategoriaIdOrderByCodigoAsc(categoria.getId());
+        String categoryCode = categoria.getCodigo();
         int nextSequence = classes.stream()
                 .map(Clasess::getCodigo)
-                .mapToInt(this::extractSequence)
+                .mapToInt(code -> extractSequence(code, categoryCode))
                 .max()
                 .orElse(0) + CODE_STEP;
 
-        return categoria.getCodigo() * CODE_BASE + nextSequence;
+        return categoryCode + nextSequence;
     }
 
-    private int extractSequence(Integer code) {
-        if (code == null) {
+    private int extractSequence(String code, String categoryCode) {
+        if (code == null || code.isBlank()) {
             return 0;
         }
-        return Math.abs(code) % CODE_BASE;
+
+        String sequence = code.startsWith(categoryCode)
+                ? code.substring(categoryCode.length())
+                : code.substring(Math.max(0, code.length() - 2));
+
+        try {
+            return Integer.parseInt(sequence);
+        } catch (NumberFormatException exception) {
+            return 0;
+        }
     }
 }

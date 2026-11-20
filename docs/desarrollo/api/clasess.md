@@ -12,6 +12,7 @@
 - URL base: `/api/v1/clasess`.
 - Cada `Clasess` pertenece a una categoría existente mediante `categoriaId`.
 - La respuesta exitosa usa `ApiResult<ClasessResponse>`.
+- El campo `codigo` se maneja como `String` y conserva la composición jerárquica.
 
 ## Código de clase
 
@@ -19,8 +20,8 @@ El código se genera automáticamente con el código de la categoría como prefi
 
 | Categoría | Clases generadas |
 |---:|---|
-| `10` | `1010`, `1020`, `1030`, ... |
-| `20` | `2010`, `2020`, `2030`, ... |
+| `"10"` | `"1010"`, `"1020"`, `"1030"`, ... |
+| `"20"` | `"2010"`, `"2020"`, `"2030"`, ... |
 
 ## DTO de entrada
 
@@ -55,7 +56,7 @@ Respuesta `201 Created` para una categoría con código `10`:
   "message": "Clasess creada correctamente",
   "data": {
     "id": "7c5e3f2e-6d6c-4c2a-8e9d-2f2e4f8f0b11",
-    "codigo": 1010,
+    "codigo": "1010",
     "nombre": "Audífonos",
     "categoria": "Audio",
     "createdAt": "2026-11-17T10:30:00Z",

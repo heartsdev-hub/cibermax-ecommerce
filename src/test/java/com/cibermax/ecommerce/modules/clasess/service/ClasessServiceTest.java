@@ -46,11 +46,11 @@ class ClasessServiceTest {
     @Test
     void create_generatesFirstCodeFromCategoryCode() {
         UUID categoriaId = UUID.randomUUID();
-        Categoria categoria = new Categoria(categoriaId, "Audio", 10, null, null);
+        Categoria categoria = new Categoria(categoriaId, "Audio", "10", null, null);
         Clasess entity = new Clasess(null, null, "Audífonos", categoria, null, null);
-        Clasess saved = new Clasess(UUID.randomUUID(), 1010, "Audífonos", categoria, null, null);
+        Clasess saved = new Clasess(UUID.randomUUID(), "1010", "Audífonos", categoria, null, null);
         ClasessResponse response = new ClasessResponse(
-                saved.getId(), 1010, "Audífonos", "Audio", null, null
+                saved.getId(), "1010", "Audífonos", "Audio", null, null
         );
         ClasessCreateRequest request = new ClasessCreateRequest("Audífonos", categoriaId);
 
@@ -65,7 +65,7 @@ class ClasessServiceTest {
 
         ApiResult<ClasessResponse> result = clasessService.create(request);
 
-        assertThat(entity.getCodigo()).isEqualTo(1010);
+        assertThat(entity.getCodigo()).isEqualTo("1010");
         assertThat(result.data()).isEqualTo(response);
         verify(clasessRepository).saveAndFlush(entity);
     }
@@ -73,8 +73,8 @@ class ClasessServiceTest {
     @Test
     void create_incrementsCodeForSameCategory() {
         UUID categoriaId = UUID.randomUUID();
-        Categoria categoria = new Categoria(categoriaId, "Audio", 10, null, null);
-        Clasess previous = new Clasess(UUID.randomUUID(), 6050, "Audífonos", categoria, null, null);
+        Categoria categoria = new Categoria(categoriaId, "Audio", "10", null, null);
+        Clasess previous = new Clasess(UUID.randomUUID(), "1050", "Audífonos", categoria, null, null);
         Clasess entity = new Clasess(null, null, "Parlantes", categoria, null, null);
         ClasessCreateRequest request = new ClasessCreateRequest("Parlantes", categoriaId);
         when(categoriaRepository.findById(categoriaId)).thenReturn(Optional.of(categoria));
@@ -88,13 +88,13 @@ class ClasessServiceTest {
 
         clasessService.create(request);
 
-        assertThat(entity.getCodigo()).isEqualTo(1060);
+        assertThat(entity.getCodigo()).isEqualTo("1060");
     }
 
     @Test
     void create_startsSequenceAtTenForAnotherCategory() {
         UUID categoriaId = UUID.randomUUID();
-        Categoria categoria = new Categoria(categoriaId, "Video", 20, null, null);
+        Categoria categoria = new Categoria(categoriaId, "Video", "20", null, null);
         Clasess entity = new Clasess(null, null, "Televisores", categoria, null, null);
         ClasessCreateRequest request = new ClasessCreateRequest("Televisores", categoriaId);
 
@@ -109,15 +109,15 @@ class ClasessServiceTest {
 
         clasessService.create(request);
 
-        assertThat(entity.getCodigo()).isEqualTo(2010);
+        assertThat(entity.getCodigo()).isEqualTo("2010");
     }
 
     @Test
     void findAll_returnsMappedClasses() {
-        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", 10, null, null);
-        Clasess entity = new Clasess(UUID.randomUUID(), 1010, "Audífonos", categoria, null, null);
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess entity = new Clasess(UUID.randomUUID(), "1010", "Audífonos", categoria, null, null);
         ClasessResponse response = new ClasessResponse(
-                entity.getId(), 1010, "Audífonos", "Audio", null, null
+                entity.getId(), "1010", "Audífonos", "Audio", null, null
         );
 
         when(clasessRepository.findAllByOrderByCodigoAsc()).thenReturn(List.of(entity));
@@ -131,9 +131,9 @@ class ClasessServiceTest {
     @Test
     void findById_returnsMappedClass() {
         UUID id = UUID.randomUUID();
-        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", 10, null, null);
-        Clasess entity = new Clasess(id, 1010, "Audífonos", categoria, null, null);
-        ClasessResponse response = new ClasessResponse(id, 1010, "Audífonos", "Audio", null, null);
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess entity = new Clasess(id, "1010", "Audífonos", categoria, null, null);
+        ClasessResponse response = new ClasessResponse(id, "1010", "Audífonos", "Audio", null, null);
 
         when(clasessRepository.findById(id)).thenReturn(Optional.of(entity));
         when(clasessMapper.toResponse(entity)).thenReturn(response);
@@ -156,9 +156,9 @@ class ClasessServiceTest {
     void update_changesNameAndKeepsCode() {
         UUID id = UUID.randomUUID();
         UUID categoriaId = UUID.randomUUID();
-        Categoria categoria = new Categoria(categoriaId, "Audio", 10, null, null);
-        Clasess entity = new Clasess(id, 1010, "Audífonos", categoria, null, null);
-        ClasessResponse response = new ClasessResponse(id, 1010, "Audífonos inalámbricos", "Audio", null, null);
+        Categoria categoria = new Categoria(categoriaId, "Audio", "10", null, null);
+        Clasess entity = new Clasess(id, "1010", "Audífonos", categoria, null, null);
+        ClasessResponse response = new ClasessResponse(id, "1010", "Audífonos inalámbricos", "Audio", null, null);
         ClasessUpdateRequest request = new ClasessUpdateRequest("Audífonos inalámbricos");
 
         when(clasessRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -170,7 +170,7 @@ class ClasessServiceTest {
 
         ApiResult<ClasessResponse> result = clasessService.update(id, request);
 
-        assertThat(entity.getCodigo()).isEqualTo(1010);
+        assertThat(entity.getCodigo()).isEqualTo("1010");
         assertThat(result.data()).isEqualTo(response);
         verify(clasessRepository).saveAndFlush(entity);
     }
@@ -179,8 +179,8 @@ class ClasessServiceTest {
     void update_rejectsDuplicateName() {
         UUID id = UUID.randomUUID();
         UUID categoriaId = UUID.randomUUID();
-        Categoria categoria = new Categoria(categoriaId, "Audio", 10, null, null);
-        Clasess entity = new Clasess(id, 1010, "Audífonos", categoria, null, null);
+        Categoria categoria = new Categoria(categoriaId, "Audio", "10", null, null);
+        Clasess entity = new Clasess(id, "1010", "Audífonos", categoria, null, null);
         ClasessUpdateRequest request = new ClasessUpdateRequest("Parlantes");
 
         when(clasessRepository.findById(id)).thenReturn(Optional.of(entity));
@@ -209,7 +209,7 @@ class ClasessServiceTest {
     @Test
     void create_rejectsDuplicateName() {
         UUID categoriaId = UUID.randomUUID();
-        Categoria categoria = new Categoria(categoriaId, "Audio", 10, null, null);
+        Categoria categoria = new Categoria(categoriaId, "Audio", "10", null, null);
         when(categoriaRepository.findById(categoriaId)).thenReturn(Optional.of(categoria));
         when(clasessRepository.existsByNombreIgnoreCaseAndCategoriaId("Audífonos", categoriaId))
                 .thenReturn(true);

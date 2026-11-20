@@ -10,7 +10,7 @@ public record ClasessResponse(
         @Schema(description = "Identificador único", accessMode = Schema.AccessMode.READ_ONLY)
         UUID id,
         @Schema(description = "Código compuesto por el código de categoría y la secuencia de clase", example = "1010")
-        Integer codigo,
+        String codigo,
         @Schema(description = "Nombre de la clase", example = "Audífonos")
         String nombre,
         @Schema(description = "Categoría padre", example = "Audio", accessMode = Schema.AccessMode.READ_ONLY)

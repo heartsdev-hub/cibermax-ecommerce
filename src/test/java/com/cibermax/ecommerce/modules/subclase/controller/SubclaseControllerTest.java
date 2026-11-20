@@ -1,0 +1,212 @@
+package com.cibermax.ecommerce.modules.subclase.controller;
+
+import com.cibermax.ecommerce.modules.subclase.dto.request.SubclaseCreateRequest;
+import com.cibermax.ecommerce.modules.subclase.dto.request.SubclaseUpdateRequest;
+import com.cibermax.ecommerce.modules.subclase.dto.response.SubclaseResponse;
+import com.cibermax.ecommerce.modules.subclase.service.SubclaseService;
+import com.cibermax.ecommerce.shared.exception.DuplicateResourceException;
+import com.cibermax.ecommerce.shared.exception.GlobalExceptionHandler;
+import com.cibermax.ecommerce.shared.exception.ResourceNotFoundException;
+import com.cibermax.ecommerce.shared.response.ApiResult;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(SubclaseController.class)
+@Import(GlobalExceptionHandler.class)
+@WithMockUser(username = "qa-user")
+class SubclaseControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private SubclaseService subclaseService;
+
+    @Test
+    void create_returnsCreated() throws Exception {
+        UUID clasessId = UUID.randomUUID();
+        SubclaseResponse response = new SubclaseResponse(
+                UUID.randomUUID(), "101010", "Inalámbricos", "Audio", "Audífonos", null, null
+        );
+        when(subclaseService.create(any(SubclaseCreateRequest.class)))
+                .thenReturn(ApiResult.success("Subclase creada correctamente", response));
+
+        mockMvc.perform(post("/api/v1/subclases")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Inalámbricos\",\"clasessId\":\"" + clasessId + "\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.codigo").value("101010"))
+                .andExpect(jsonPath("$.data.categoria").value("Audio"))
+                .andExpect(jsonPath("$.data.clase").value("Audífonos"));
+    }
+
+    @Test
+    void create_returnsBadRequestWhenDataIsInvalid() throws Exception {
+        mockMvc.perform(post("/api/v1/subclases")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(subclaseService, never()).create(any(SubclaseCreateRequest.class));
+    }
+
+    @Test
+    void create_returnsNotFoundWhenClassDoesNotExist() throws Exception {
+        UUID clasessId = UUID.randomUUID();
+        when(subclaseService.create(any(SubclaseCreateRequest.class)))
+                .thenThrow(new ResourceNotFoundException("No se encontró la Clasess con id: " + clasessId));
+
+        mockMvc.perform(post("/api/v1/subclases")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Inalámbricos\",\"clasessId\":\"" + clasessId + "\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void findAll_returnsOkWithSubclases() throws Exception {
+        SubclaseResponse response = new SubclaseResponse(
+                UUID.randomUUID(), "101010", "Inalámbricos", "Audio", "Audífonos", null, null
+        );
+        when(subclaseService.findAll()).thenReturn(ApiResult.success(
+                "Subclases obtenidas correctamente", java.util.List.of(response)
+        ));
+
+        mockMvc.perform(get("/api/v1/subclases"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].codigo").value("101010"))
+                .andExpect(jsonPath("$.data[0].clase").value("Audífonos"));
+    }
+
+    @Test
+    void findAll_returnsEmptyList() throws Exception {
+        when(subclaseService.findAll()).thenReturn(ApiResult.success(
+                "Subclases obtenidas correctamente", java.util.List.of()
+        ));
+
+        mockMvc.perform(get("/api/v1/subclases"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void findById_returnsOkWithSubclaseDetails() throws Exception {
+        UUID id = UUID.randomUUID();
+        SubclaseResponse response = new SubclaseResponse(
+                id, "101010", "Inalámbricos", "Audio", "Audífonos", null, null
+        );
+        when(subclaseService.findById(id)).thenReturn(ApiResult.success(
+                "Subclase obtenida correctamente", response
+        ));
+
+        mockMvc.perform(get("/api/v1/subclases/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(id.toString()))
+                .andExpect(jsonPath("$.data.codigo").value("101010"))
+                .andExpect(jsonPath("$.data.categoria").value("Audio"))
+                .andExpect(jsonPath("$.data.clase").value("Audífonos"));
+    }
+
+    @Test
+    void findById_returnsNotFoundWhenSubclaseDoesNotExist() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(subclaseService.findById(id))
+                .thenThrow(new ResourceNotFoundException("No se encontró la subclase con id: " + id));
+
+        mockMvc.perform(get("/api/v1/subclases/{id}", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void findById_returnsBadRequestForInvalidUuid() throws Exception {
+        mockMvc.perform(get("/api/v1/subclases/{id}", "uuid-invalido"))
+                .andExpect(status().isBadRequest());
+
+        verify(subclaseService, never()).findById(any(UUID.class));
+    }
+
+    @Test
+    void update_returnsOkWithUpdatedSubclase() throws Exception {
+        UUID id = UUID.randomUUID();
+        SubclaseResponse response = new SubclaseResponse(
+                id, "101010", "Audífonos inalámbricos", "Audio", "Audífonos", null, null
+        );
+        when(subclaseService.update(any(UUID.class), any(SubclaseUpdateRequest.class)))
+                .thenReturn(ApiResult.success("Subclase actualizada correctamente", response));
+
+        mockMvc.perform(put("/api/v1/subclases/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Audífonos inalámbricos\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.codigo").value("101010"))
+                .andExpect(jsonPath("$.data.nombre").value("Audífonos inalámbricos"));
+    }
+
+    @Test
+    void update_returnsBadRequestWhenNameIsMissing() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(put("/api/v1/subclases/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(subclaseService, never()).update(any(UUID.class), any(SubclaseUpdateRequest.class));
+    }
+
+    @Test
+    void update_returnsNotFoundWhenSubclaseDoesNotExist() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(subclaseService.update(any(UUID.class), any(SubclaseUpdateRequest.class)))
+                .thenThrow(new ResourceNotFoundException("No se encontró la subclase con id: " + id));
+
+        mockMvc.perform(put("/api/v1/subclases/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Audífonos inalámbricos\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void update_returnsConflictForDuplicateName() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(subclaseService.update(any(UUID.class), any(SubclaseUpdateRequest.class)))
+                .thenThrow(new DuplicateResourceException(
+                        "Ya existe una subclase con el nombre indicado en la Clasess seleccionada"
+                ));
+
+        mockMvc.perform(put("/api/v1/subclases/{id}", id)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Audífonos inalámbricos\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
+}

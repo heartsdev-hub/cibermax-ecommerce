@@ -16,8 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -105,14 +103,14 @@ public class CategoriaService {
         return ApiResult.success("Categoría creada correctamente", categoriaMapper.toResponse(saved));
     }
 
-    private int nextCategoryCode() {
-        Optional<Categoria> lastCategory = Optional.ofNullable(
-                categoriaRepository.findTopByOrderByCodigoDesc()
-        ).orElse(Optional.empty());
+    private String nextCategoryCode() {
+        int nextCode = categoriaRepository.findAll().stream()
+                .map(Categoria::getCodigo)
+                .filter(code -> code != null && !code.isBlank())
+                .mapToInt(Integer::parseInt)
+                .max()
+                .orElse(0) + 10;
 
-        return lastCategory.map(Categoria::getCodigo)
-                .filter(Objects::nonNull)
-                .map(code -> code + 10)
-                .orElse(10);
+        return String.valueOf(nextCode);
     }
 }

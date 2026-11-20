@@ -64,20 +64,20 @@ class ClasessIntegrationTest {
     @DisplayName("persiste Clasess con código heredado y categoría asociada")
     void persistsClassWithCategoryAndCode() {
         Categoria categoria = categoriaRepository.saveAndFlush(
-                new Categoria(null, "Audio", 10, null, null)
+                new Categoria(null, "Audio", "10", null, null)
         );
         Clasess first = clasessRepository.saveAndFlush(
-                new Clasess(null, 1010, "Audífonos", categoria, null, null)
+                new Clasess(null, "1010", "Audífonos", categoria, null, null)
         );
         Clasess second = clasessRepository.saveAndFlush(
-                new Clasess(null, 1020, "Parlantes", categoria, null, null)
+                new Clasess(null, "1020", "Parlantes", categoria, null, null)
         );
 
         List<Clasess> classes = clasessRepository.findByCategoriaIdOrderByCodigoAsc(categoria.getId());
 
         assertThat(classes).extracting(Clasess::getCodigo)
-                .containsExactly(1010, 1020);
-        assertThat(first.getCategoria().getCodigo()).isEqualTo(10);
+                .containsExactly("1010", "1020");
+        assertThat(first.getCategoria().getCodigo()).isEqualTo("10");
         assertThat(second.getCreatedAt()).isNotNull();
         assertThat(second.getUpdatedAt()).isNotNull();
     }
@@ -85,36 +85,36 @@ class ClasessIntegrationTest {
     @Test
     @DisplayName("POST registra una Clasess con código basado en la categoría")
     void create_persistsClassWithCategoryCode() throws Exception {
-        Categoria categoria = saveCategory("Audio", 10);
+        Categoria categoria = saveCategory("Audio", "10");
 
         mockMvc.perform(post(BASE_URL)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Mouse\",\"categoriaId\":\"" + categoria.getId() + "\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.codigo").value(1010))
+                .andExpect(jsonPath("$.data.codigo").value("1010"))
                 .andExpect(jsonPath("$.data.nombre").value("Mouse"))
                 .andExpect(jsonPath("$.data.categoria").value("Audio"))
                 .andExpect(jsonPath("$.data.categoriaId").doesNotExist())
                 .andExpect(jsonPath("$.data.categoriaCodigo").doesNotExist());
 
         Clasess saved = clasessRepository.findAll().get(0);
-        assertThat(saved.getCodigo()).isEqualTo(1010);
+        assertThat(saved.getCodigo()).isEqualTo("1010");
         assertThat(saved.getCategoria().getId()).isEqualTo(categoria.getId());
     }
 
     @Test
     @DisplayName("GET lista las Clasess ordenadas por código")
     void findAll_returnsPersistedClasses() throws Exception {
-        Categoria categoria = saveCategory("Audio", 10);
-        clasessRepository.saveAndFlush(new Clasess(null, 1020, "Parlantes", categoria, null, null));
-        clasessRepository.saveAndFlush(new Clasess(null, 1010, "Audífonos", categoria, null, null));
+        Categoria categoria = saveCategory("Audio", "10");
+        clasessRepository.saveAndFlush(new Clasess(null, "1020", "Parlantes", categoria, null, null));
+        clasessRepository.saveAndFlush(new Clasess(null, "1010", "Audífonos", categoria, null, null));
 
         mockMvc.perform(get(BASE_URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(2))
-                .andExpect(jsonPath("$.data[0].codigo").value(1010))
-                .andExpect(jsonPath("$.data[1].codigo").value(1020));
+                .andExpect(jsonPath("$.data[0].codigo").value("1010"))
+                .andExpect(jsonPath("$.data[1].codigo").value("1020"));
     }
 
     @Test
@@ -128,15 +128,15 @@ class ClasessIntegrationTest {
     @Test
     @DisplayName("GET por ID devuelve una Clasess existente")
     void findById_returnsExistingClass() throws Exception {
-        Categoria categoria = saveCategory("Audio", 10);
+        Categoria categoria = saveCategory("Audio", "10");
         Clasess saved = clasessRepository.saveAndFlush(
-                new Clasess(null, 1010, "Audífonos", categoria, null, null)
+                new Clasess(null, "1010", "Audífonos", categoria, null, null)
         );
 
         mockMvc.perform(get(BASE_URL + "/" + saved.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.id").value(saved.getId().toString()))
-                .andExpect(jsonPath("$.data.codigo").value(1010))
+                .andExpect(jsonPath("$.data.codigo").value("1010"))
                 .andExpect(jsonPath("$.data.categoria").value("Audio"));
     }
 
@@ -150,9 +150,9 @@ class ClasessIntegrationTest {
     @Test
     @DisplayName("PUT actualiza el nombre y conserva el código")
     void update_persistsNameAndKeepsCode() throws Exception {
-        Categoria categoria = saveCategory("Audio", 10);
+        Categoria categoria = saveCategory("Audio", "10");
         Clasess saved = clasessRepository.saveAndFlush(
-                new Clasess(null, 1010, "Audífonos", categoria, null, null)
+                new Clasess(null, "1010", "Audífonos", categoria, null, null)
         );
 
         mockMvc.perform(put(BASE_URL + "/" + saved.getId())
@@ -160,23 +160,23 @@ class ClasessIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Audífonos inalámbricos\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.codigo").value(1010))
+                .andExpect(jsonPath("$.data.codigo").value("1010"))
                 .andExpect(jsonPath("$.data.nombre").value("Audífonos inalámbricos"));
 
         Clasess updated = clasessRepository.findById(saved.getId()).orElseThrow();
         assertThat(updated.getNombre()).isEqualTo("Audífonos inalámbricos");
-        assertThat(updated.getCodigo()).isEqualTo(1010);
+        assertThat(updated.getCodigo()).isEqualTo("1010");
     }
 
     @Test
     @DisplayName("PUT rechaza nombres duplicados dentro de la misma categoría")
     void update_rejectsDuplicateNameInCategory() throws Exception {
-        Categoria categoria = saveCategory("Audio", 10);
+        Categoria categoria = saveCategory("Audio", "10");
         Clasess first = clasessRepository.saveAndFlush(
-                new Clasess(null, 1010, "Audífonos", categoria, null, null)
+                new Clasess(null, "1010", "Audífonos", categoria, null, null)
         );
         clasessRepository.saveAndFlush(
-                new Clasess(null, 1020, "Parlantes", categoria, null, null)
+                new Clasess(null, "1020", "Parlantes", categoria, null, null)
         );
 
         mockMvc.perform(put(BASE_URL + "/" + first.getId())
@@ -199,9 +199,9 @@ class ClasessIntegrationTest {
     @Test
     @DisplayName("PUT responde 400 cuando el nombre está vacío")
     void update_rejectsBlankName() throws Exception {
-        Categoria categoria = saveCategory("Audio", 10);
+        Categoria categoria = saveCategory("Audio", "10");
         Clasess saved = clasessRepository.saveAndFlush(
-                new Clasess(null, 1010, "Audífonos", categoria, null, null)
+                new Clasess(null, "1010", "Audífonos", categoria, null, null)
         );
 
         mockMvc.perform(put(BASE_URL + "/" + saved.getId())
@@ -211,7 +211,7 @@ class ClasessIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    private Categoria saveCategory(String nombre, int codigo) {
+    private Categoria saveCategory(String nombre, String codigo) {
         return categoriaRepository.saveAndFlush(new Categoria(null, nombre, codigo, null, null));
     }
 

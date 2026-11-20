@@ -31,11 +31,24 @@ public interface ClasessMapper {
     @Mapping(target = "codigo", expression = "java(formatCodigo(entity))")
     ClasessResponse toResponse(Clasess entity);
 
-    default Integer formatCodigo(Clasess entity) {
+    default String formatCodigo(Clasess entity) {
         if (entity.getCodigo() == null || entity.getCategoria() == null || entity.getCategoria().getCodigo() == null) {
             return entity.getCodigo();
         }
 
-        return entity.getCategoria().getCodigo() * 100 + Math.abs(entity.getCodigo()) % 100;
+        String categoryCode = entity.getCategoria().getCodigo();
+        return categoryCode + extractSequence(entity.getCodigo(), categoryCode);
+    }
+
+    default int extractSequence(String code, String categoryCode) {
+        String sequence = code.startsWith(categoryCode)
+                ? code.substring(categoryCode.length())
+                : code.substring(Math.max(0, code.length() - 2));
+
+        try {
+            return Integer.parseInt(sequence);
+        } catch (NumberFormatException exception) {
+            return 0;
+        }
     }
 }

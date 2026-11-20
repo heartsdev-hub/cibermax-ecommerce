@@ -83,13 +83,13 @@ class CategoriaIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").isNotEmpty())
-                .andExpect(jsonPath("$.data.codigo").value(10))
+                .andExpect(jsonPath("$.data.codigo").value("10"))
                 .andExpect(jsonPath("$.data.nombre").value("Computadoras"))
                 .andExpect(jsonPath("$.data.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.data.updatedAt").isNotEmpty());
 
         Categoria saved = categoriaRepository.findAll().get(0);
-        assertThat(saved.getCodigo()).isEqualTo(10);
+        assertThat(saved.getCodigo()).isEqualTo("10");
         assertThat(saved.getNombre()).isEqualTo("Computadoras");
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
@@ -103,14 +103,14 @@ class CategoriaIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Computadoras\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.codigo").value(10));
+                .andExpect(jsonPath("$.data.codigo").value("10"));
 
         mockMvc.perform(post(BASE_URL)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombre\":\"Celulares\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.codigo").value(20));
+                .andExpect(jsonPath("$.data.codigo").value("20"));
     }
 
     @Test
@@ -275,11 +275,11 @@ class CategoriaIntegrationTest {
                         .content("{\"nombre\":\"Laptops\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.nombre").value("Laptops"))
-                .andExpect(jsonPath("$.data.codigo").value(10))
+                .andExpect(jsonPath("$.data.codigo").value("10"))
                 .andExpect(jsonPath("$.data.updatedAt").isNotEmpty());
 
         Categoria updated = categoriaRepository.findById(saved.getId()).orElseThrow();
-        assertThat(updated.getCodigo()).isEqualTo(10);
+        assertThat(updated.getCodigo()).isEqualTo("10");
         assertThat(updated.getNombre()).isEqualTo("Laptops");
         assertThat(updated.getUpdatedAt()).isNotNull();
     }
@@ -338,9 +338,9 @@ class CategoriaIntegrationTest {
     }
 
     private Categoria saveCategory(String nombre) {
-        int nextCode = categoriaRepository.findTopByOrderByCodigoDesc()
-                .map(categoria -> categoria.getCodigo() + 10)
-                .orElse(10);
+        String nextCode = categoriaRepository.findTopByOrderByCodigoDesc()
+                .map(categoria -> String.valueOf(Integer.parseInt(categoria.getCodigo()) + 10))
+                .orElse("10");
         return categoriaRepository.saveAndFlush(new Categoria(null, nombre, nextCode, null, null));
     }
 
