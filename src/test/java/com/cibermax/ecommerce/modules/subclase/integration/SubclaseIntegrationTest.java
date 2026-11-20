@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -201,6 +202,73 @@ class SubclaseIntegrationTest {
     @DisplayName("GET por ID responde 400 cuando el UUID es inválido")
     void findById_rejectsInvalidUuid() throws Exception {
         mockMvc.perform(get(BASE_URL + "/uuid-invalido"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT actualiza el nombre y conserva código y jerarquía")
+    void update_persistsNameAndKeepsCodeAndHierarchy() throws Exception {
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1010");
+        Subclase saved = subclaseRepository.saveAndFlush(
+                new Subclase(null, "101010", "Inalámbricos", clasess, null, null)
+        );
+
+        mockMvc.perform(put(BASE_URL + "/" + saved.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Audífonos inalámbricos\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.codigo").value("101010"))
+                .andExpect(jsonPath("$.data.nombre").value("Audífonos inalámbricos"))
+                .andExpect(jsonPath("$.data.categoria").value("Audio"))
+                .andExpect(jsonPath("$.data.clase").value("Audífonos"));
+
+        Subclase updated = subclaseRepository.findById(saved.getId()).orElseThrow();
+        assertThat(updated.getNombre()).isEqualTo("Audífonos inalámbricos");
+        assertThat(updated.getCodigo()).isEqualTo("101010");
+        assertThat(updated.getClasess().getId()).isEqualTo(clasess.getId());
+    }
+
+    @Test
+    @DisplayName("PUT rechaza un nombre duplicado dentro de la misma Clasess")
+    void update_rejectsDuplicateName() throws Exception {
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1010");
+        Subclase first = subclaseRepository.saveAndFlush(
+                new Subclase(null, "101010", "Inalámbricos", clasess, null, null)
+        );
+        subclaseRepository.saveAndFlush(
+                new Subclase(null, "101020", "Bluetooth", clasess, null, null)
+        );
+
+        mockMvc.perform(put(BASE_URL + "/" + first.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Bluetooth\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("PUT responde 404 para una subclase inexistente")
+    void update_returnsNotFoundForMissingSubclase() throws Exception {
+        mockMvc.perform(put(BASE_URL + "/" + UUID.randomUUID())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Bluetooth\"}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT responde 400 cuando el nombre está vacío")
+    void update_rejectsBlankName() throws Exception {
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1010");
+        Subclase saved = subclaseRepository.saveAndFlush(
+                new Subclase(null, "101010", "Inalámbricos", clasess, null, null)
+        );
+
+        mockMvc.perform(put(BASE_URL + "/" + saved.getId())
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"\"}"))
                 .andExpect(status().isBadRequest());
     }
 

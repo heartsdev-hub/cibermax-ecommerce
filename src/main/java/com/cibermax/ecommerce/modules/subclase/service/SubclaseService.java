@@ -3,6 +3,7 @@ package com.cibermax.ecommerce.modules.subclase.service;
 import com.cibermax.ecommerce.modules.clasess.entity.Clasess;
 import com.cibermax.ecommerce.modules.clasess.repository.ClasessRepository;
 import com.cibermax.ecommerce.modules.subclase.dto.request.SubclaseCreateRequest;
+import com.cibermax.ecommerce.modules.subclase.dto.request.SubclaseUpdateRequest;
 import com.cibermax.ecommerce.modules.subclase.dto.response.SubclaseResponse;
 import com.cibermax.ecommerce.modules.subclase.entity.Subclase;
 import com.cibermax.ecommerce.modules.subclase.mapper.SubclaseMapper;
@@ -80,6 +81,30 @@ public class SubclaseService {
         return ApiResult.success(
                 "Subclase obtenida correctamente",
                 subclaseMapper.toResponse(subclase)
+        );
+    }
+
+    @Transactional
+    public ApiResult<SubclaseResponse> update(UUID id, SubclaseUpdateRequest request) {
+        Subclase subclase = subclaseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró la subclase con id: " + id
+                ));
+
+        if (subclaseRepository.existsByNombreIgnoreCaseAndClasessIdAndIdNot(
+                request.nombre(), subclase.getClasess().getId(), id
+        )) {
+            throw new DuplicateResourceException(
+                    "Ya existe una subclase con el nombre indicado en la Clasess seleccionada"
+            );
+        }
+
+        subclaseMapper.updateEntity(request, subclase);
+        Subclase updated = subclaseRepository.saveAndFlush(subclase);
+
+        return ApiResult.success(
+                "Subclase actualizada correctamente",
+                subclaseMapper.toResponse(updated)
         );
     }
 

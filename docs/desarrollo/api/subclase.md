@@ -103,6 +103,23 @@ Respuesta `201 Created` para una Clasess con código `1010`:
 }
 ```
 
+## Actualizar subclase
+
+```http
+PUT /api/v1/subclases/{id}
+Content-Type: application/json
+```
+
+Solicitud:
+
+```json
+{
+  "nombre": "Audífonos inalámbricos"
+}
+```
+
+El `id` debe ser un UUID existente. La actualización modifica únicamente el nombre; el código, la `Clasess` padre y la categoría permanecen sin cambios. Devuelve `200 OK` si se actualiza correctamente.
+
 ## Persistencia
 
 La entidad `Subclase` se persiste en la tabla `subclases` y contiene UUID, código único, nombre, relación obligatoria con `Clasess`, `created_at` y `updated_at`. El nombre no puede repetirse dentro de la misma `Clasess`.

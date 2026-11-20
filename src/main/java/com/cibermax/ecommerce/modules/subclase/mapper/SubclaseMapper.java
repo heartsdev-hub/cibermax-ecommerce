@@ -2,10 +2,12 @@ package com.cibermax.ecommerce.modules.subclase.mapper;
 
 import com.cibermax.ecommerce.modules.clasess.entity.Clasess;
 import com.cibermax.ecommerce.modules.subclase.dto.request.SubclaseCreateRequest;
+import com.cibermax.ecommerce.modules.subclase.dto.request.SubclaseUpdateRequest;
 import com.cibermax.ecommerce.modules.subclase.dto.response.SubclaseResponse;
 import com.cibermax.ecommerce.modules.subclase.entity.Subclase;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface SubclaseMapper {
@@ -17,6 +19,13 @@ public interface SubclaseMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Subclase toEntity(SubclaseCreateRequest request, Clasess clasess);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "codigo", ignore = true)
+    @Mapping(target = "clasess", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    void updateEntity(SubclaseUpdateRequest request, @MappingTarget Subclase entity);
 
     @Mapping(target = "categoria", source = "clasess.categoria.nombre")
     @Mapping(target = "clase", source = "clasess.nombre")

@@ -4,6 +4,7 @@ import com.cibermax.ecommerce.modules.categoria.entity.Categoria;
 import com.cibermax.ecommerce.modules.clasess.entity.Clasess;
 import com.cibermax.ecommerce.modules.clasess.repository.ClasessRepository;
 import com.cibermax.ecommerce.modules.subclase.dto.request.SubclaseCreateRequest;
+import com.cibermax.ecommerce.modules.subclase.dto.request.SubclaseUpdateRequest;
 import com.cibermax.ecommerce.modules.subclase.dto.response.SubclaseResponse;
 import com.cibermax.ecommerce.modules.subclase.entity.Subclase;
 import com.cibermax.ecommerce.modules.subclase.mapper.SubclaseMapper;
@@ -170,5 +171,66 @@ class SubclaseServiceTest {
                 .hasMessageContaining(id.toString());
 
         verify(subclaseMapper, never()).toResponse(any(Subclase.class));
+    }
+
+    @Test
+    void update_changesNameAndKeepsCodeAndParent() {
+        UUID id = UUID.randomUUID();
+        UUID clasessId = UUID.randomUUID();
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(clasessId, "1010", "Audífonos", categoria, null, null);
+        Subclase entity = new Subclase(id, "101010", "Inalámbricos", clasess, null, null);
+        SubclaseResponse response = new SubclaseResponse(
+                id, "101010", "Audífonos inalámbricos", "Audio", "Audífonos", null, null
+        );
+        SubclaseUpdateRequest request = new SubclaseUpdateRequest("Audífonos inalámbricos");
+
+        when(subclaseRepository.findById(id)).thenReturn(Optional.of(entity));
+        when(subclaseRepository.existsByNombreIgnoreCaseAndClasessIdAndIdNot(
+                request.nombre(), clasessId, id
+        )).thenReturn(false);
+        when(subclaseRepository.saveAndFlush(entity)).thenReturn(entity);
+        when(subclaseMapper.toResponse(entity)).thenReturn(response);
+
+        ApiResult<SubclaseResponse> result = subclaseService.update(id, request);
+
+        assertThat(result.data()).isEqualTo(response);
+        assertThat(entity.getCodigo()).isEqualTo("101010");
+        assertThat(entity.getClasess()).isSameAs(clasess);
+        verify(subclaseMapper).updateEntity(request, entity);
+        verify(subclaseRepository).saveAndFlush(entity);
+    }
+
+    @Test
+    void update_rejectsMissingSubclase() {
+        UUID id = UUID.randomUUID();
+        when(subclaseRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> subclaseService.update(
+                id, new SubclaseUpdateRequest("Audífonos inalámbricos")
+        )).isInstanceOf(ResourceNotFoundException.class);
+
+        verify(subclaseRepository, never()).saveAndFlush(any(Subclase.class));
+    }
+
+    @Test
+    void update_rejectsDuplicateNameInSameClass() {
+        UUID id = UUID.randomUUID();
+        UUID clasessId = UUID.randomUUID();
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(clasessId, "1010", "Audífonos", categoria, null, null);
+        Subclase entity = new Subclase(id, "101010", "Inalámbricos", clasess, null, null);
+        SubclaseUpdateRequest request = new SubclaseUpdateRequest("Bluetooth");
+
+        when(subclaseRepository.findById(id)).thenReturn(Optional.of(entity));
+        when(subclaseRepository.existsByNombreIgnoreCaseAndClasessIdAndIdNot(
+                request.nombre(), clasessId, id
+        )).thenReturn(true);
+
+        assertThatThrownBy(() -> subclaseService.update(id, request))
+                .isInstanceOf(DuplicateResourceException.class);
+
+        verify(subclaseMapper, never()).updateEntity(request, entity);
+        verify(subclaseRepository, never()).saveAndFlush(any(Subclase.class));
     }
 }

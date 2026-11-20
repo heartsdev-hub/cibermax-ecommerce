@@ -13,4 +13,6 @@ public interface SubclaseRepository extends JpaRepository<Subclase, UUID> {
     List<Subclase> findByClasessIdOrderByCodigoAsc(UUID clasessId);
 
     boolean existsByNombreIgnoreCaseAndClasessId(String nombre, UUID clasessId);
+
+    boolean existsByNombreIgnoreCaseAndClasessIdAndIdNot(String nombre, UUID clasessId, UUID id);
 }
