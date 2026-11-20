@@ -17,11 +17,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @Tag(name = "Subclases", description = "API REST para registrar subclases asociadas a una Clasess")
 @RestController
@@ -45,6 +47,28 @@ public class SubclaseController {
     @GetMapping
     public ResponseEntity<ApiResult<List<SubclaseResponse>>> findAll() {
         return ResponseEntity.ok(subclaseService.findAll());
+    }
+
+    @Operation(
+            summary = "Obtener subclase por ID",
+            description = "Obtiene una subclase mediante su UUID, incluyendo su categoría y Clasess relacionadas."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subclase obtenida correctamente"),
+            @ApiResponse(responseCode = "400", description = "Formato de UUID inválido"),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Subclase no encontrada",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResult<SubclaseResponse>> findById(
+            @Parameter(description = "UUID de la subclase", required = true)
+            @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(subclaseService.findById(id));
     }
 
     @Operation(

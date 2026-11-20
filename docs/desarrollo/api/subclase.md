@@ -41,6 +41,33 @@ GET /api/v1/subclases
 
 Devuelve `200 OK` con todas las subclases ordenadas por `codigo`. Si no existen registros, `data` es una lista vacía.
 
+## Obtener subclase por ID
+
+```http
+GET /api/v1/subclases/{id}
+```
+
+El parámetro `id` es un UUID. Devuelve `200 OK` con la subclase, su categoría y su `Clasess` relacionada. Si el UUID es inválido responde `400 Bad Request`; si no existe responde `404 Not Found`.
+
+Ejemplo de respuesta `200 OK`:
+
+```json
+{
+  "success": true,
+  "message": "Subclase obtenida correctamente",
+  "data": {
+    "id": "7c5e3f2e-6d6c-4c2a-8e9d-2f2e4f8f0b11",
+    "codigo": "101010",
+    "nombre": "Inalámbricos",
+    "categoria": "Audio",
+    "clase": "Audífonos",
+    "createdAt": "2026-11-17T10:30:00Z",
+    "updatedAt": "2026-11-17T10:30:00Z"
+  },
+  "timestamp": "2026-11-17T10:30:00Z"
+}
+```
+
 ## Registrar subclase
 
 ```http
@@ -85,5 +112,5 @@ La entidad `Subclase` se persiste en la tabla `subclases` y contiene UUID, códi
 | Código HTTP | Situación |
 |---:|---|
 | `400 Bad Request` | Nombre vacío, ausente o mayor de 100 caracteres; `clasessId` ausente |
-| `404 Not Found` | La Clasess padre no existe |
+| `404 Not Found` | La Clasess padre o la subclase indicada no existe |
 | `409 Conflict` | Ya existe una subclase con el mismo nombre dentro de la Clasess |

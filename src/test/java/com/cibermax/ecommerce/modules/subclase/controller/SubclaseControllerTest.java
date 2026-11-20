@@ -107,4 +107,42 @@ class SubclaseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isEmpty());
     }
+
+    @Test
+    void findById_returnsOkWithSubclaseDetails() throws Exception {
+        UUID id = UUID.randomUUID();
+        SubclaseResponse response = new SubclaseResponse(
+                id, "101010", "Inalámbricos", "Audio", "Audífonos", null, null
+        );
+        when(subclaseService.findById(id)).thenReturn(ApiResult.success(
+                "Subclase obtenida correctamente", response
+        ));
+
+        mockMvc.perform(get("/api/v1/subclases/{id}", id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(id.toString()))
+                .andExpect(jsonPath("$.data.codigo").value("101010"))
+                .andExpect(jsonPath("$.data.categoria").value("Audio"))
+                .andExpect(jsonPath("$.data.clase").value("Audífonos"));
+    }
+
+    @Test
+    void findById_returnsNotFoundWhenSubclaseDoesNotExist() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(subclaseService.findById(id))
+                .thenThrow(new ResourceNotFoundException("No se encontró la subclase con id: " + id));
+
+        mockMvc.perform(get("/api/v1/subclases/{id}", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void findById_returnsBadRequestForInvalidUuid() throws Exception {
+        mockMvc.perform(get("/api/v1/subclases/{id}", "uuid-invalido"))
+                .andExpect(status().isBadRequest());
+
+        verify(subclaseService, never()).findById(any(UUID.class));
+    }
 }

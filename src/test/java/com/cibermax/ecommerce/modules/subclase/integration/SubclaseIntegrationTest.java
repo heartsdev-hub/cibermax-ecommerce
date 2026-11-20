@@ -171,6 +171,39 @@ class SubclaseIntegrationTest {
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 
+    @Test
+    @DisplayName("GET por ID devuelve una subclase con su jerarquía")
+    void findById_returnsExistingSubclase() throws Exception {
+        Clasess clasess = saveClasess("Audio", "10", "Audífonos", "1010");
+        Subclase saved = subclaseRepository.saveAndFlush(
+                new Subclase(null, "101010", "Inalámbricos", clasess, null, null)
+        );
+
+        mockMvc.perform(get(BASE_URL + "/" + saved.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(saved.getId().toString()))
+                .andExpect(jsonPath("$.data.codigo").value("101010"))
+                .andExpect(jsonPath("$.data.nombre").value("Inalámbricos"))
+                .andExpect(jsonPath("$.data.categoria").value("Audio"))
+                .andExpect(jsonPath("$.data.clase").value("Audífonos"));
+    }
+
+    @Test
+    @DisplayName("GET por ID responde 404 cuando la subclase no existe")
+    void findById_returnsNotFound() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/" + UUID.randomUUID()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    @DisplayName("GET por ID responde 400 cuando el UUID es inválido")
+    void findById_rejectsInvalidUuid() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/uuid-invalido"))
+                .andExpect(status().isBadRequest());
+    }
+
     private Clasess saveClasess(String categoriaNombre, String categoriaCodigo, String nombre, String codigo) {
         Categoria categoria = categoriaRepository.saveAndFlush(
                 new Categoria(null, categoriaNombre, categoriaCodigo, null, null)

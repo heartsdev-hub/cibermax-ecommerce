@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class SubclaseService {
@@ -67,6 +68,19 @@ public class SubclaseService {
                 .toList();
 
         return ApiResult.success("Subclases obtenidas correctamente", subclases);
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResult<SubclaseResponse> findById(UUID id) {
+        Subclase subclase = subclaseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No se encontró la subclase con id: " + id
+                ));
+
+        return ApiResult.success(
+                "Subclase obtenida correctamente",
+                subclaseMapper.toResponse(subclase)
+        );
     }
 
     private String nextSubclaseCode(Clasess clasess) {

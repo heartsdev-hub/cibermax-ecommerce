@@ -138,4 +138,37 @@ class SubclaseServiceTest {
 
         assertThat(result.data()).containsExactly(response);
     }
+
+    @Test
+    void findById_returnsMappedSubclase() {
+        UUID id = UUID.randomUUID();
+        Categoria categoria = new Categoria(UUID.randomUUID(), "Audio", "10", null, null);
+        Clasess clasess = new Clasess(UUID.randomUUID(), "1010", "Audífonos", categoria, null, null);
+        Subclase entity = new Subclase(id, "101010", "Inalámbricos", clasess, null, null);
+        SubclaseResponse response = new SubclaseResponse(
+                id, "101010", "Inalámbricos", "Audio", "Audífonos", null, null
+        );
+
+        when(subclaseRepository.findById(id)).thenReturn(Optional.of(entity));
+        when(subclaseMapper.toResponse(entity)).thenReturn(response);
+
+        ApiResult<SubclaseResponse> result = subclaseService.findById(id);
+
+        assertThat(result.success()).isTrue();
+        assertThat(result.message()).isEqualTo("Subclase obtenida correctamente");
+        assertThat(result.data()).isEqualTo(response);
+        verify(subclaseMapper).toResponse(entity);
+    }
+
+    @Test
+    void findById_rejectsMissingSubclase() {
+        UUID id = UUID.randomUUID();
+        when(subclaseRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> subclaseService.findById(id))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining(id.toString());
+
+        verify(subclaseMapper, never()).toResponse(any(Subclase.class));
+    }
 }
